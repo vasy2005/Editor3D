@@ -490,6 +490,7 @@ void getMouseInputPos(Object* object[], int n)
 }
 
 // asdjkfakdbfhabdsghabdghbjasjdfbasdf
+// comentariu 2
 
 int main()
 {
