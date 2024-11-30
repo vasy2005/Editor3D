@@ -489,6 +489,8 @@ void getMouseInputPos(Object* object[], int n)
 	}
 }
 
+// asdjkfakdbfhabdsghabdghbjasjdfbasdf
+
 int main()
 {
 	srand(time(NULL));
