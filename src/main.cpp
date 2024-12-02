@@ -1,6 +1,7 @@
 #include <graphics.h>
 
 #include <iostream>
+#include <fstream>
 #include <cmath>
 #include <random>
 #include <time.h>
@@ -11,8 +12,8 @@ using namespace std;
 
 
 ///// CONSTANTS ///////////////////////////////////////////////////////////////////////////////////
-#define windowWidth 1152
-#define windowHeight 648
+#define windowWidth  1920
+#define windowHeight 1080
 
 #define PI  3.141592f
 #define PHI 1.618033f
@@ -82,22 +83,285 @@ void getMouseInputPos(Object* object[], int n);
 void checkKeyPressed();
 void deleteVertex(int, Object*);
 
+
+
+
+
+void RandomizeObjectProperties(Object* object)
+{
+	float scale = (float)(rand() % 90 + 10);
+
+	object->scale    = {scale, scale, scale};
+	object->rotation = {PI/180 * (rand() % 360), PI/180 * (rand() % 360), PI/180 * (rand() % 360)};
+	object->color    = {rand() % 256, rand() % 256, rand() % 256};
+}
+
+struct Flags
+{
+	HWND windowHandle = NULL;
+	bool windowShouldClose = false;
+
+	int objectCapacity = 16;
+
+	bool pressedSpace = false;
+};
+
+bool IsPressed(int key)
+{
+	return (GetAsyncKeyState(key) & 0x8000);
+}
+
+void SkipFileLine(ifstream& fin, int lineCount)
+{
+	char line[512];
+	for (int i = 0; i < lineCount; i++)
+		fin.getline(line, 512);
+}
+
+void ProcessInput(Object**& objects, int& objectCount, Flags*& flags)
+{
+	int mouseX = mousex();
+	int mouseY = mousey();
+
+
+
+	// close the app by pressing ESC
+	if (IsPressed(VK_ESCAPE))
+		flags->windowShouldClose = true;
+
+
+
+	// save files with CTRL + S
+	if (IsPressed(VK_CONTROL) && IsPressed('S'))
+	{
+		OPENFILENAME dialogue = { 0 };
+		char filePath[512] = "";
+
+		dialogue.lStructSize = sizeof(dialogue);
+		dialogue.hwndOwner   = flags->windowHandle;
+		dialogue.lpstrFilter = "3D Scene File (*.tri)\0*.tri\0";
+		dialogue.lpstrFile   = filePath;
+		dialogue.nMaxFile    = 512;
+		dialogue.Flags       = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+		dialogue.lpstrDefExt = "tri";
+
+		int error = GetSaveFileName(&dialogue); // open the dialogue window
+
+		if (error != 0) // success
+		{
+			// do something with the file path
+			ofstream fout(filePath);
+
+			fout << "# Number of objects\n";
+			fout << objectCount << "\n\n";
+
+			for (int i = 0; i < objectCount; i++)
+			{
+				fout << "========== Object " << i << " ==========\n";
+
+				fout << "# Vertices\n";
+				fout << objects[i]->vertexCount << '\n';
+				for (int j = 0; j < objects[i]->vertexCount; j++)
+					fout << objects[i]->vertices[j].x << ' ' << objects[i]->vertices[j].y << ' ' << objects[i]->vertices[j].z << '\n';
+
+				fout << "\n# Triangles\n";
+				fout << objects[i]->indexCount << '\n';
+				for (int j = 0; j < objects[i]->indexCount; j++)
+					fout << objects[i]->indices[j][0] << ' ' << objects[i]->indices[j][1] << ' ' << objects[i]->indices[j][2] << '\n';
+
+				fout << "\n# Position\n";
+				fout << objects[i]->position.x << ' ' << objects[i]->position.y << ' ' << objects[i]->position.z << '\n';
+
+				fout << "\n# Scale\n";
+				fout << objects[i]->scale.x << ' ' << objects[i]->scale.y << ' ' << objects[i]->scale.z << '\n';
+
+				fout << "\n# Rotation\n";
+				fout << objects[i]->rotation.x << ' ' << objects[i]->rotation.y << ' ' << objects[i]->rotation.z << '\n';
+
+				fout << "\n# Color\n";
+				fout << objects[i]->color.r << ' ' << objects[i]->color.g << ' ' << objects[i]->color.b << ' ' << objects[i]->color.a << '\n';
+
+				fout << "\n# Hitbox\n";
+				fout << objects[i]->hitBox[0].x << ' ' << objects[i]->hitBox[0].y << '\n';
+				fout << objects[i]->hitBox[1].x << ' ' << objects[i]->hitBox[1].y << '\n';
+
+				fout << "\n# Graph\n";
+				for (int j = 0; j < objects[i]->vertexCount; j++)
+				{
+					for (int k = 0; k < objects[i]->vertexCount; k++)
+						fout << objects[i]->ad[j][k] << ' ';
+					fout << '\n';
+				}
+
+				fout << '\n';
+			}
+
+			fout.close();
+		}
+	}
+
+
+
+	// open files with CTRL + O
+	if (IsPressed(VK_CONTROL) && IsPressed('O'))
+	{
+		OPENFILENAME dialogue = { 0 };
+		char filePath[512] = "";
+
+		dialogue.lStructSize = sizeof(dialogue);
+		dialogue.hwndOwner   = flags->windowHandle;
+		dialogue.lpstrFilter = "3D Scene File (*.tri)\0*.tri\0";
+		dialogue.lpstrFile   = filePath;
+		dialogue.nMaxFile    = 512;
+		dialogue.Flags       = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+		dialogue.lpstrDefExt = "tri";
+
+		int error = GetOpenFileName(&dialogue); // open the dialogue window
+
+		if (error != 0) // success
+		{
+			// do something with the file path
+			ifstream fin(filePath);
+
+			SkipFileLine(fin, 1); // skip comment lines
+			fin >> objectCount;
+			SkipFileLine(fin, 2); // leftover '\n' after last read numeric value. skip extra line because of that
+
+			// resize objects
+			Object** temp = new Object*[objectCount];
+			delete[] objects;
+			objects = temp;
+
+			for (int i = 0; i < objectCount; i++)
+			{
+				objects[i] = new Object;
+
+				SkipFileLine(fin, 2);
+				fin >> objects[i]->vertexCount;
+				objects[i]->vertices = new Vector3[objects[i]->vertexCount];
+				for (int j = 0; j < objects[i]->vertexCount; j++)
+					fin >> objects[i]->vertices[j].x >> objects[i]->vertices[j].y >> objects[i]->vertices[j].z;
+
+				SkipFileLine(fin, 3);
+				fin >> objects[i]->indexCount;
+				objects[i]->indices = new int*[objects[i]->indexCount];
+				for (int j = 0; j < objects[i]->indexCount; j++)
+				{
+					objects[i]->indices[j] = new int[3];
+					fin >> objects[i]->indices[j][0] >> objects[i]->indices[j][1] >> objects[i]->indices[j][2];
+				}
+
+				SkipFileLine(fin, 3);
+				fin >> objects[i]->position.x >> objects[i]->position.y >> objects[i]->position.z;
+
+				SkipFileLine(fin, 3);
+				fin >> objects[i]->scale.x >> objects[i]->scale.y >> objects[i]->scale.z;
+
+				SkipFileLine(fin, 3);
+				fin >> objects[i]->rotation.x >> objects[i]->rotation.y >> objects[i]->rotation.z;
+
+				SkipFileLine(fin, 3);
+				fin >> objects[i]->color.r >> objects[i]->color.g >> objects[i]->color.b >> objects[i]->color.a;
+
+				SkipFileLine(fin, 3);
+				fin >> objects[i]->hitBox[0].x >> objects[i]->hitBox[0].y;
+				fin >> objects[i]->hitBox[1].x >> objects[i]->hitBox[1].y;
+
+				SkipFileLine(fin, 3);
+				objects[i]->ad = new bool*[objects[i]->vertexCount];
+				for(int j = 0; j < objects[i]->vertexCount; j++)
+				{
+					objects[i]->ad[j] = new bool[objects[i]->vertexCount];
+
+					for (int k = 0; k < objects[i]->vertexCount; k++)
+						fin >> objects[i]->ad[j][k];
+				}
+
+				SkipFileLine(fin, 2);
+			}
+
+			fin.close();
+		}
+	}
+
+
+
+	// create new objects with keyboard shortcuts
+	if (IsPressed(VK_SPACE))
+	{
+		if (flags->pressedSpace == false)
+		{
+			if (objectCount + 1 > flags->objectCapacity) // resize objects if too many are added
+			{
+				flags->objectCapacity *= 2;
+				Object** temp = new Object*[flags->objectCapacity];
+				memcpy(temp, objects, sizeof(Object*) * objectCount);
+				delete[] objects;
+				objects = temp;
+			}
+
+
+			int oldObjectCount = objectCount;
+
+
+			int random = -1;
+			if (IsPressed('R')) // create a random object SPACE + R
+				random = rand() % 2;
+
+
+
+			if      (IsPressed('1') || random == 0) // create cube SPACE + 1
+				objects[objectCount++] = NewCube(       {(float)(mouseX), (float)(mouseY), 0}, {100, 100, 100 }, {0, 0, 0}, {255, 255, 255});
+
+			else if (IsPressed('2') || random == 1) // create icosahedron SPACE + 2
+				objects[objectCount++] = NewIcosahedron({(float)(mouseX), (float)(mouseY), 0}, { 50,  50,  50 }, {0, 0, 0}, {255, 255, 255});
+
+
+
+			if (oldObjectCount != objectCount) // modified
+			{
+				if (random != -1)
+					RandomizeObjectProperties(objects[objectCount - 1]);
+
+				// flags->selectedObject = objects[objectCount - 1];
+				// flags->updateWindow = true;
+				flags->pressedSpace = true;
+
+				// cout << objectCount << '/' << flags->objectCapacity << '\n';
+			}
+		}
+	}
+	else
+		flags->pressedSpace = false;
+}
+
+
+
+
 int main()
 {
 	srand(time(NULL));
-	initwindow(windowWidth, windowHeight);
+	initwindow(windowWidth, windowHeight, "Editor3D");
 	setlinestyle(SOLID_LINE, 0, THICK_WIDTH); // make lines thicker to stop floodfill from flickering
 
-	const int n = 2; Object* object[n];
-	object[0] = NewIcosahedron({windowWidth/4, windowWidth/3, 0}, {100, 100, 100}, {0, 0, 0}, {45, 130, 220});
-	object[1] = NewCube({ windowWidth / 4*3, windowWidth / 3, 0}, {100, 100, 100}, {PI / 4, PI / 4, 0}, {33, 200,  60});
+	Flags* flags = new Flags;
+	flags->windowHandle = FindWindow(NULL, "Editor3D");
+	ShowWindow(flags->windowHandle, SW_MAXIMIZE);
+
+	Object** objects = new Object*[flags->objectCapacity]; // init with capacity of 16, resize later
+	int objectCount = 0;
+
+	// object[0] = NewIcosahedron({windowWidth/4, windowWidth/3, 0}, {100, 100, 100}, {0, 0, 0}, {45, 130, 220});
+	// object[1] = NewCube({ windowWidth / 4*3, windowWidth / 3, 0}, {100, 100, 100}, {PI / 4, PI / 4, 0}, {33, 200,  60});
 	//object[1] = NewNObject(4, { windowWidth / 4 * 3, windowWidth / 3, 0 }, { 100, 100, 100 }, { 0,0, 0 }, { 45, 130, 220 });
 	//object[1] = New30Object({ windowWidth / 4 * 3, windowWidth / 3, 0 }, { 100, 100, 100 }, { 0,0, 0 }, { 45, 130, 220 });
 
 	int buffer = 0;                                                                                 // double buffering (removes flickering)
 
-	while (1)
+	while (flags->windowShouldClose == false)
 	{
+		ProcessInput(objects, objectCount, flags); // handle mouse and keyboard events
+
 		setactivepage(buffer);                                                                      // double buffering
 		setvisualpage(1 - buffer);                                                                  // double buffering
 
@@ -105,19 +369,19 @@ int main()
 		cleardevice(); // clear previous frame
 
 		//selectedVertice = -1;
-		for (int i = 0; i < n; ++i)
+		for (int i = 0; i < objectCount; ++i)
 		{
-			DrawObject(object[i]);
-			drawHitBox(object[i]);
+			DrawObject(objects[i]);
+			drawHitBox(objects[i]);
 		}
 		
 		//object1->rotation = {object1->rotation.x + 0.05f, object1->rotation.y + 0.05f, object1->rotation.z + 0.00f};
 		//object2->rotation = {object2->rotation.x + 0.05f, object2->rotation.y + 0.05f, object2->rotation.z + 0.00f};
 		///////////////////////////////////////////////////////
 
-		getMouseInputRot(object, n);
-		getMouseInputScale(object, n);
-		getMouseInputPos(object, n);
+		getMouseInputRot(objects, objectCount);
+		getMouseInputScale(objects, objectCount);
+		getMouseInputPos(objects, objectCount);
 		checkKeyPressed();
 		selectedVertice = -1;
 
@@ -127,10 +391,9 @@ int main()
 		//Sleep(16); // wait 16 milliseconds between frames. should make the app run at around 60fps
 	}
 
-	delete object[0];
-	delete object[1];
+	delete flags;
+	delete[] objects;
 	closegraph();
-	getch();
 	return 0;
 }
 
