@@ -4,6 +4,7 @@
 #include <cmath>
 #include <random>
 #include <time.h>
+#include <windows.h>
 
 using namespace std;
 
@@ -16,6 +17,7 @@ using namespace std;
 #define PI  3.141592f
 #define PHI 1.618033f
 #define INF 1000000005
+#define EPS 0.01
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -41,7 +43,7 @@ struct Color
 struct Object
 {
 	Vector3* vertices;
-	int*     indices; // triangles
+	int**     indices; // triangles
 
 	int vertexCount;
 	int indexCount;
@@ -52,14 +54,100 @@ struct Object
 	Vector3 scale;
 	Vector3 rotation;
 
+	bool** ad; //matrice de adiacenta a grafului
+
 	Color color;
 };
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+int selectedVertice = -1; Object* selectedObject; //select point to edit
+
+Object* NewCube(Vector3 position, Vector3 scale, Vector3 rotation, Color color);
+Object* NewIcosahedron(Vector3 position, Vector3 scale, Vector3 rotation, Color color);
+Object* NewNObject(int n, Vector3 position, Vector3 scale, Vector3 rotation, Color color);
+void Translate(Vector3& vector, Vector3 offset);
+void Scale(Vector3& vector, Vector3 scale);
+void Transform(double transform_mat[3][3], Vector3& vector);
+void Rotate(Vector3& vector, Vector3 rotation);
+Vector3 SurfaceNormal(Vector3 first, Vector3 second, Vector3 third);
+Vector3 cross(Vector3, Vector3);
+double dot(Vector3, Vector3);
+void DrawLine(Vector3 first, Vector3 second);
+void DrawTriangle(int[3], Object*, Object* orig);
+void DrawObject(Object* object);
+void drawHitBox(Object* object);
+void getMouseInputRot(Object* object[], int n);
+void getMouseInputScale(Object* object[], int n);
+void getMouseInputPos(Object* object[], int n);
+void checkKeyPressed();
+void deleteVertex(int, Object*);
+
+int main()
+{
+	srand(time(NULL));
+	initwindow(windowWidth, windowHeight);
+	setlinestyle(SOLID_LINE, 0, THICK_WIDTH); // make lines thicker to stop floodfill from flickering
+
+	const int n = 2; Object* object[n];
+	object[0] = NewIcosahedron({windowWidth/4, windowWidth/3, 0}, {100, 100, 100}, {0, 0, 0}, {45, 130, 220});
+	object[1] = NewCube({ windowWidth / 4*3, windowWidth / 3, 0}, {100, 100, 100}, {PI / 4, PI / 4, 0}, {33, 200,  60});
+	//object[1] = NewNObject(4, { windowWidth / 4 * 3, windowWidth / 3, 0 }, { 100, 100, 100 }, { 0,0, 0 }, { 45, 130, 220 });
+	//object[1] = New30Object({ windowWidth / 4 * 3, windowWidth / 3, 0 }, { 100, 100, 100 }, { 0,0, 0 }, { 45, 130, 220 });
+
+	int buffer = 0;                                                                                 // double buffering (removes flickering)
+
+	while (1)
+	{
+		setactivepage(buffer);                                                                      // double buffering
+		setvisualpage(1 - buffer);                                                                  // double buffering
+
+		///// DRAW HERE ///////////////////////////////////////
+		cleardevice(); // clear previous frame
+
+		//selectedVertice = -1;
+		for (int i = 0; i < n; ++i)
+		{
+			DrawObject(object[i]);
+			drawHitBox(object[i]);
+		}
+		
+		//object1->rotation = {object1->rotation.x + 0.05f, object1->rotation.y + 0.05f, object1->rotation.z + 0.00f};
+		//object2->rotation = {object2->rotation.x + 0.05f, object2->rotation.y + 0.05f, object2->rotation.z + 0.00f};
+		///////////////////////////////////////////////////////
+
+		getMouseInputRot(object, n);
+		getMouseInputScale(object, n);
+		getMouseInputPos(object, n);
+		checkKeyPressed();
+		selectedVertice = -1;
 
 
+		buffer = 1 - buffer;                                                                        // double buffering
 
+		//Sleep(16); // wait 16 milliseconds between frames. should make the app run at around 60fps
+	}
 
+	delete object[0];
+	delete object[1];
+	closegraph();
+	getch();
+	return 0;
+}
+
+/*
+* Etape:
+* 1. Creare puncte rosii pe varfuri
+* 2. Punctele cresc cand cursorul e pe ele
+* 3. Miscare varfuri xOy (cu click stanga)
+* 4. Miscare varfuri OZ (cu click dreapta)
+* 5. Stergere puncte (cu grafuri)
+*	- stergere varf din vertices
+*   - stergere indices incidente
+*   - creare noi indices cu graf
+*   - stergere din graf
+* 6. Creare puncte noi
+* 7. Legare puncte, combinare obiecte
+*/
 ///// OBJECT CREATION FUNCTIONS ///////////////////////////////////////////////////////////////////
 Object* NewCube(Vector3 position, Vector3 scale, Vector3 rotation, Color color)
 {
@@ -76,24 +164,52 @@ Object* NewCube(Vector3 position, Vector3 scale, Vector3 rotation, Color color)
 									   {+0.5f, +0.5f, -0.5f},
 									   {+0.5f, -0.5f, -0.5f} };
 
-	object->indexCount = 36;
-	object->indices = new Vector3[36]{ 0, 4, 7},
-								   0, 7, 3,
-								   
-		                           2, 1, 0, 
-								   3, 2, 0, 
-								   
-		                           0, 1, 5, 
-								   0, 5, 4, 
-								   
-		                           4, 5, 6, 
-								   4, 6, 7, 
-								   
-		                           6, 2, 3, 
-								   7, 6, 3, 
-								   
-		                           6, 5, 1, 
-								   2, 6, 1 };
+	object->indexCount = 12;
+	const int cnt = object->indexCount;
+	int aux[12][3] = { {0, 4, 7},
+		{0, 7, 3},
+
+		{2, 1, 0},
+		{3, 2, 0},
+
+		{0, 1, 5},
+		{0, 5, 4},
+
+		{4, 5, 6},
+		{4, 6, 7},
+
+		{6, 2, 3},
+		{7, 6, 3},
+
+		{6, 5, 1},
+		{2, 6, 1}
+	};
+	object->indices = new int* [cnt]; //create indices
+	object->ad = new bool* [object->vertexCount]; //create graph
+	for (int i = 0; i < cnt; ++i)
+	{
+		object->indices[i] = new int[3];
+		for (int j = 0; j < 3; ++j)
+			object->indices[i][j] = aux[i][j];
+	}
+
+	for (int i = 0; i < object->vertexCount; ++i)
+	{
+		object->ad[i] = new bool[object->vertexCount];
+		for (int j = 0; j < object->vertexCount; ++j)
+			object->ad[i][j] = 0;
+	}
+
+	for (int i = 0; i < cnt; ++i)
+	{
+		int a = object->indices[i][0];
+		int b = object->indices[i][1];
+		int c = object->indices[i][2];
+
+		object->ad[a][b] = object->ad[b][a] = 1;
+		object->ad[a][c] = object->ad[c][a] = 1;
+		object->ad[b][c] = object->ad[c][b] = 1;
+	}
 
 	object->position = position;
 	object->scale    = scale;
@@ -122,30 +238,57 @@ Object* NewIcosahedron(Vector3 position, Vector3 scale, Vector3 rotation, Color 
 									    { +PHI, -1.0f, 0.0f },
 									    { -PHI, +1.0f, 0.0f },
 									    { +PHI, +1.0f, 0.0f } };
+	object->indexCount = 20;
+	const int cnt = object->indexCount;
+	int aux[20][3] = {{0, 4, 5},
+		{ 0,  5,  9 },
+		{ 0,  9,  2 },
+		{ 0,  2,  8 },
+		{0, 8, 4},
 
-	object->indexCount = 60;
-	object->indices = new int[60] { 0,  4,  5,
-									0,  5,  9,
-									0,  9,  2,
-									0,  2,  8,
-									0,  8,  4,
+		{ 5,  4,  1 },
+		{ 11,  5,  1 },
+		{5, 11,  9},
+		{7,  9, 11},
+		{9,  7,  2},
+		{7,  6,  2},
+		{2,  6,  8},
+		{10,  8,  6},
+		{4,  8, 10},
+		{1,  4, 10},
 
-									5,  4,  1,
-								   11,  5,  1,
-									5, 11,  9,
-									7,  9, 11,
-									9,  7,  2,
-									7,  6,  2,
-									2,  6,  8,
-								   10,  8,  6,
-								    4,  8, 10,
-									1,  4, 10,
+		{3,  1, 10},
+		{3, 11,  1},
+		{3,  7, 11},
+		{3,  6,  7},
+		{3, 10,  6}
+	};
+	object->indices = new int* [100]; //create indices
+	object->ad = new bool* [object->vertexCount]; //create graph
+	for (int i = 0; i < cnt; ++i)
+	{
+		object->indices[i] = new int[3];
+		for (int j = 0; j < 3; ++j)
+			object->indices[i][j] = aux[i][j];
+	}
 
-									3,  1, 10,
-									3, 11,  1,
-									3,  7, 11,
-									3,  6,  7,
-									3, 10,  6 };
+	for (int i = 0; i < object->vertexCount; ++i)
+	{
+		object->ad[i] = new bool[object->vertexCount];
+		for (int j = 0; j < object->vertexCount; ++j)
+			object->ad[i][j] = 0;
+	}
+
+	for (int i = 0; i < cnt; ++i)
+	{
+		int a = object->indices[i][0];
+		int b = object->indices[i][1];
+		int c = object->indices[i][2];
+
+		object->ad[a][b] = object->ad[b][a] = 1;
+		object->ad[a][c] = object->ad[c][a] = 1;
+		object->ad[b][c] = object->ad[c][b] = 1;
+	}
 
 	object->position = position;
 	object->scale    = scale;
@@ -156,7 +299,7 @@ Object* NewIcosahedron(Vector3 position, Vector3 scale, Vector3 rotation, Color 
 }
 
 double r = 2;
-Object* NewNObject(int n, Vector3 position, Vector3 scale, Vector3 rotation, Color color)
+/*Object* NewNObject(int n, Vector3 position, Vector3 scale, Vector3 rotation, Color color)
 {
 	Object* object = new Object;
 
@@ -195,7 +338,7 @@ Object* NewNObject(int n, Vector3 position, Vector3 scale, Vector3 rotation, Col
 	object->color = color;
 
 	return object;
-}
+}*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -270,6 +413,16 @@ Vector3 SurfaceNormal(Vector3 first, Vector3 second, Vector3 third) // 3d perpen
 
 	return { A.y * B.z - A.z * B.y, A.z * B.x - A.x * B.z, A.x * B.y - A.y * B.x };
 }
+
+Vector3 cross(Vector3 A, Vector3 B)
+{
+	return { A.y * B.z - A.z * B.y, -A.x * B.z + A.z * B.x, A.x * B.y - A.y * B.x };
+}
+
+double dot(Vector3 A, Vector3 B)
+{
+	return A.x * B.x + A.y * B.y + A.z * B.z;
+}
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -282,85 +435,124 @@ void DrawLine(Vector3 first, Vector3 second)
 	line(first.x, first.y, second.x, second.y);
 }
 
-void DrawTriangle(Vector3 first, Vector3 second, Vector3 third, Color color, Object *object)
+void DrawTriangle(int indice[3], Object* object, Object* orig)
 {
-	Vector3 normal = SurfaceNormal(first, second, third);
+	Vector3* first = &object->vertices[indice[0]];
+	Vector3* second = &object->vertices[indice[1]];
+	Vector3* third = &object->vertices[indice[2]];
+
+	Vector3 normal = SurfaceNormal(*first, *second, *third);
 	Normalize(normal);
 
 	// backface culling. don't draw triangles the camera can't see. increases performance.
 	if (normal.z < 0) // TODO: works for now because camera faces negative z axis. will have to check which dir the camera is facing once it can move around.
 		return;
+		
 
 	double average = 255 * (normal.x + normal.y + normal.z) / 3;
 
-	int r = color.r - average; if (r < 0) r = 0; if (r > 255) r = 255;
-	int g = color.g - average; if (g < 0) g = 0; if (g > 255) g = 255;
-	int b = color.b - average; if (b < 0) b = 0; if (b > 255) b = 255;
+	int r = object->color.r - average; if (r < 0) r = 0; if (r > 255) r = 255;
+	int g = object->color.g - average; if (g < 0) g = 0; if (g > 255) g = 255;
+	int b = object->color.b - average; if (b < 0) b = 0; if (b > 255) b = 255;
 
 	int final_color = RGB(r, g, b);
 	setcolor(final_color);
 
-	DrawLine(first, second);
-	DrawLine(second, third);
-	DrawLine(third, first);
-
-	object->hitBox[0].x = min(object->hitBox[0].x, first.x);
-	object->hitBox[0].y = min(object->hitBox[0].y, first.y);
-	object->hitBox[1].x = max(object->hitBox[1].x, first.x);
-	object->hitBox[1].y = max(object->hitBox[1].y, first.y);
-
-	object->hitBox[0].x = min(object->hitBox[0].x, second.x);
-	object->hitBox[0].y = min(object->hitBox[0].y, second.y);
-	object->hitBox[1].x = max(object->hitBox[1].x, second.x);
-	object->hitBox[1].y = max(object->hitBox[1].y, second.y);
-
-	object->hitBox[0].x = min(object->hitBox[0].x, third.x);
-	object->hitBox[0].y = min(object->hitBox[0].y, third.y);
-	object->hitBox[1].x = max(object->hitBox[1].x, third.x);
-	object->hitBox[1].y = max(object->hitBox[1].y, third.y);
+	DrawLine(*first, *second);
+	DrawLine(*second, *third);
+	DrawLine(*third, *first);
 
 
-	Vector3 center = { (first.x + second.x + third.x)/3, (first.y + second.y + third.y)/3, 0}; // z might matter later?
-
+	Vector3 center = { (first->x + second->x + third->x)/3, (first->y + second->y + third->y)/3, 0}; // z might matter later?
+	//final_color += rand() % 100;
 	setfillstyle(SOLID_FILL, final_color);
-	int points[6] = { first.x, first.y, second.x, second.y, third.x, third.y };
-	fillpoly(3, points);
+	floodfill(center.x, center.y, final_color);
+	//int aux[6] = {first->x, first->y, second->x, second->y, third->x, third->y};
+	//fillpoly(3, aux);
+
+	//Vertex select
+	setcolor(RED);
+	setfillstyle(SOLID_FILL, RED);
+
+	Vector3 points[] = { *first, *second, *third };
+	
+	for (int i = 0; i < 3; ++i)
+	{
+		double rad = 6;
+		if (abs(points[i].x - mousex()) <= rad && abs(points[i].y - mousey()) <= rad)
+		{
+			//selected point
+			rad = 10;
+			selectedVertice = indice[i]; selectedObject = orig;
+		}
+
+	//Object HitBox
+	for (int i = 0; i < 3; ++i)
+	{
+		Vector3* crt = &object->vertices[indice[i]];
+		object->hitBox[0].x = min(object->hitBox[0].x, crt->x);
+		object->hitBox[0].y = min(object->hitBox[0].y, crt->y);
+		object->hitBox[1].x = max(object->hitBox[1].x, crt->x);
+		object->hitBox[1].y = max(object->hitBox[1].y, crt->y);
+	}
+		circle(points[i].x, points[i].y, rad);
+		floodfill(points[i].x, points[i].y, RED);
+	}
 }
 
 void DrawObject(Object* object)
 {
-	Vector3* copy_vertices = new Vector3[object->vertexCount];
-	memcpy(copy_vertices, object->vertices, sizeof(Vector3) * object->vertexCount);
+	//copy object
+	Object *crt = new Object;
+	crt->vertexCount = object->vertexCount;
+	crt->indexCount = object->indexCount;
+	crt->position = object->position; crt->rotation = object->rotation;
+	crt->scale = object->scale; crt->color = object->color;
+	crt->vertices = new Vector3[object->vertexCount];
+	memcpy(crt->vertices, object->vertices, sizeof(Vector3) * object->vertexCount);
 
-	int* copy_indices = new int[object->indexCount];
-	memcpy(copy_indices, object->indices, sizeof(int) * object->indexCount);
+	crt->indices = new int* [object->indexCount];
+	for (int i = 0; i < object->indexCount; ++i)
+	{
+		crt->indices[i] = new int[3];
+		memcpy(crt->indices[i], object->indices[i], sizeof(int[3]));
+	}
 
-	object->hitBox[0] = { INF, INF };
-	object->hitBox[1] = { -1, -1 };
+	crt->hitBox[0] = { INF, INF };
+	crt->hitBox[1] = { -1, -1 };
 
 	//object->rotation.x = object->rotation.x - floor(object->rotation.x);
 	//object->rotation.y = object->rotation.y - floor(object->rotation.y);
 	//object->rotation.z = object->rotation.z - floor(object->rotation.z);
 
+	//transform object
 	for (int i = 0; i < object->vertexCount; i++)
 	{
 		Rotate(object->vertices[i], object->rotation);
-		Rotate(copy_vertices[i], object->rotation);
-		Scale(copy_vertices[i], object->scale);
-		Translate(copy_vertices[i], object->position);
+		Rotate(crt->vertices[i], crt->rotation);
+		Scale(crt->vertices[i], crt->scale);
+		Translate(crt->vertices[i], crt->position);
+		//Rotate(copy_vertices[i], object->rotation);
+		//Scale(copy_vertices[i], object->scale);
+		//Translate(copy_vertices[i], object->position);
 		
 
 		// move (0, 0) to center of screen
-		//Translate(copy_vertices[i], {windowWidth/2, windowHeight/2, 0});
+		//Translate(object->vertices[i], {windowWidth/2, windowHeight/2, 0});
 	}
 
-	for (int i = 0; i < object->indexCount; i += 3)
-		DrawTriangle(copy_vertices[copy_indices[i]], copy_vertices[copy_indices[i + 1]], copy_vertices[copy_indices[i + 2]], object->color, object);
+	for (int i = 0; i < crt->indexCount; i ++)
+		DrawTriangle(crt->indices[i], crt, object);
+
+	object->hitBox[0] = crt->hitBox[0];
+	object->hitBox[1] = crt->hitBox[1];
+
+	for (int i = 0; i < crt->indexCount; i++)
+		delete[] crt->indices[i];
+	delete[] crt->vertices;
+	delete crt;
 
 	object->rotation = { 0, 0, 0 };
-
-	delete[] copy_vertices;
-	delete[] copy_indices;
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -372,7 +564,6 @@ void drawHitBox(Object* object)
 	setcolor(WHITE);
 	rectangle(first.x, first.y, second.x, second.y);
 }
-
 
 void getMouseInputRot(Object* object[], int n)
 {
@@ -415,17 +606,19 @@ void getMouseInputRot(Object* object[], int n)
 
 void getMouseInputScale(Object* object[], int n)
 {
-	static bool mouseS = 0; 
 	static double initxS, inityS; 
 	static int crtS;
+	static bool mouseS = 0;
 
-	double x = mousex(), y = mousey();
 	if (ismouseclick(WM_MBUTTONUP))
 	{
 		mouseS = 0;
 		clearmouseclick(WM_MBUTTONUP);
+		clearmouseclick(WM_MBUTTONDOWN);
 		return;
 	}
+
+	double x = mousex(), y = mousey();
 
 	if (ismouseclick(WM_MBUTTONDOWN))
 	{
@@ -460,9 +653,25 @@ void getMouseInputPos(Object* object[], int n)
 	static int dx, dy;
 	static bool mouseP = 0;
 
+	if (ismouseclick(WM_LBUTTONUP))
+	{
+		mouseP = 0;
+		clearmouseclick(WM_LBUTTONUP);
+		clearmouseclick(WM_LBUTTONDOWN);
+		selectedVertice = -1;
+		return;
+	}
+
 	double x = mousex(), y = mousey();
 	if (ismouseclick(WM_LBUTTONDOWN))
 	{
+		if (selectedVertice != -1)
+		{ 
+			selectedObject->vertices[selectedVertice].x = (x - selectedObject->position.x) / selectedObject->scale.x;
+			selectedObject->vertices[selectedVertice].y = (y - selectedObject->position.y) / selectedObject->scale.y;
+			return;
+		}
+
 		for (int i = 0; i < n; ++i)
 		{
 			Vector2 first = object[i]->hitBox[0];
@@ -480,206 +689,139 @@ void getMouseInputPos(Object* object[], int n)
 				break;
 			}
 		}
+
 	}
-	if (ismouseclick(WM_LBUTTONUP))
-	{
-		mouseP = 0;
-		clearmouseclick(WM_LBUTTONDOWN);
-		clearmouseclick(WM_LBUTTONUP);
-	}
+	
 }
 
-// asdjkfakdbfhabdsghabdghbjasjdfbasdf
-// comentariu 2
-// comentariu 3
-
-int main()
+void checkKeyPressed()
 {
-	srand(time(NULL));
-	initwindow(windowWidth, windowHeight);
-	setlinestyle(SOLID_LINE, 0, THICK_WIDTH); // make lines thicker to stop floodfill from flickering
-
-	const int n = 2; Object* object[n];
-	object[0] = NewIcosahedron({windowWidth/4, windowWidth/3, 0}, {100, 100, 100}, {0, 0, 0}, {45, 130, 220});
-	object[1] = NewCube({ windowWidth / 4*3, windowWidth / 3, 0}, {100, 100, 100}, {PI / 4, PI / 4, 0}, {33, 200,  60});
-	//object[1] = NewNObject(4, { windowWidth / 4 * 3, windowWidth / 3, 0 }, { 100, 100, 100 }, { 0,0, 0 }, { 45, 130, 220 });
-	//object[1] = New30Object({ windowWidth / 4 * 3, windowWidth / 3, 0 }, { 100, 100, 100 }, { 0,0, 0 }, { 45, 130, 220 });
-
-	int buffer = 0;                                                                                 // double buffering (removes flickering)
-
-	while (1)
+	bool static pressed = 0;
+	if (GetKeyState('Q') & 0x8000)
 	{
-		setactivepage(buffer);                                                                      // double buffering
-		setvisualpage(1 - buffer);                                                                  // double buffering
+		if (pressed) return;
+		pressed = 1;
+		if (selectedVertice != -1)
+			deleteVertex(selectedVertice, selectedObject);
+		return;
+	}
+	
+	pressed = 0;
+}
 
-		///// DRAW HERE ///////////////////////////////////////
-		cleardevice(); // clear previous frame
-
-		for (int i = 0; i < n; ++i)
+void deleteVertex(int vertex, Object* object)
+{
+	// Remove triangles containing the vertex
+	for (int i = 0; i < object->indexCount; ++i)
+	{
+		int a = object->indices[i][0];
+		int b = object->indices[i][1];
+		int c = object->indices[i][2];
+		if (a == vertex || b == vertex || c == vertex) 
 		{
-			DrawObject(object[i]);
-			drawHitBox(object[i]);
+			for (int j = i; j < object->indexCount - 1; ++j)
+			{
+				object->indices[j][0] = object->indices[j + 1][0];
+				object->indices[j][1] = object->indices[j + 1][1];
+				object->indices[j][2] = object->indices[j + 1][2];
+			}
+			object->indexCount--;
+			i--; 
 		}
-		
-		//object1->rotation = {object1->rotation.x + 0.05f, object1->rotation.y + 0.05f, object1->rotation.z + 0.00f};
-		//object2->rotation = {object2->rotation.x + 0.05f, object2->rotation.y + 0.05f, object2->rotation.z + 0.00f};
-		///////////////////////////////////////////////////////
-
-		getMouseInputRot(object, n);
-		getMouseInputScale(object, n);
-		getMouseInputPos(object, n);
-
-
-		buffer = 1 - buffer;                                                                        // double buffering
-
-		//Sleep(16); // wait 16 milliseconds between frames. should make the app run at around 60fps
 	}
 
-	delete object[0];
-	delete object[1];
-	closegraph();
-	getch();
-	return 0;
+	// Collect neighbors
+	int neighborsCounter = 0;;
+	for (int i = 0; i < object->vertexCount; ++i)
+		if (object->ad[vertex][i])
+			neighborsCounter++;
+	int* neighbors = new int[neighborsCounter];
+	for (int i = 0, j = 0; i < object->vertexCount; ++i)
+		if (object->ad[vertex][i])
+			neighbors[j++] = i;
+
+	// Compute centroid
+	Vector3 centroid = { 0, 0, 0 };
+	for (int i = 0; i < neighborsCounter; ++i)
+	{
+		centroid.x += object->vertices[neighbors[i]].x;
+		centroid.y += object->vertices[neighbors[i]].y;
+		centroid.z += object->vertices[neighbors[i]].z;
+	}
+	centroid.x /= neighborsCounter;
+	centroid.y /= neighborsCounter;
+	centroid.z /= neighborsCounter;
+
+	// Sort neighbors counterclockwise
+	//calculate the orthogonal frame
+	Vector3 normal = SurfaceNormal(object->vertices[neighbors[0]], object->vertices[neighbors[1]], object->vertices[neighbors[2]]);
+	Normalize(normal);
+
+	Vector3 u = (fabs(normal.x) > 0.9) ? Vector3{ 0, 1, 0 } : Vector3{ 1, 0, 0 };
+	u = cross(normal, u); Normalize(u);
+	Vector3 v = cross(normal, u);
+
+	double* angle = new double[neighborsCounter];
+
+	for (int i = 0; i < neighborsCounter; ++i)
+	{
+		Vector3 v = object->vertices[neighbors[i]];
+		Vector3 r = { v.x - centroid.x, v.y - centroid.y, v.z - centroid.z };
+
+		angle[i] = atan2(r.y, r.x);
+	}
+
+	for (int i = 0; i < neighborsCounter-1; ++i)
+		for (int j = i+1; j < neighborsCounter; ++j)
+				if (angle[i] > angle[j])
+				{
+					swap(angle[i], angle[j]);
+					swap(neighbors[i], neighbors[j]);
+				}
+
+	// Add new triangles
+	for (int i = 1; i < neighborsCounter-1; ++i) 
+	{
+		object->indices[object->indexCount][0] = neighbors[0];
+		object->indices[object->indexCount][1] = neighbors[i];
+		object->indices[object->indexCount][2] = neighbors[i + 1];
+		object->indexCount++;
+	}
+
+	// Shift vertices array
+	for (int i = vertex; i < object->vertexCount - 1; ++i) {
+		object->vertices[i] = object->vertices[i + 1];
+	}
+	object->vertexCount--;
+
+	// Update indices to reflect vertex shift
+	for (int i = 0; i < object->indexCount; ++i)
+		for (int j = 0; j < 3; ++j)
+			if (object->indices[i][j] > vertex) 
+				object->indices[i][j]--;
+	
+	//Update ad matrix
+	for (int i = 0; i < object->vertexCount; ++i)
+		for (int j = 0; j < object->vertexCount; ++j)
+			object->ad[i][j] = 0;
+
+	for (int i = 0; i < object->indexCount; ++i)
+	{
+		int a = object->indices[i][0];
+		int b = object->indices[i][1];
+		int c = object->indices[i][2];
+
+		object->ad[a][b] = object->ad[b][a] = 1;
+		object->ad[a][c] = object->ad[c][a] = 1;
+		object->ad[b][c] = object->ad[c][b] = 1;
+	}
+
+	delete[] neighbors;
+	delete[] angle;
 }
 
 
 
 
 
-//Object* NewSphere(Vector3 position, Vector3 scale, Vector3 rotation, Color color)
-//{
-//	Object* object = NewIcosahedron({ 0, 0, 0 }, { 1, 1, 1 }, { 0, 0, 0 }, { 255, 255, 255 });
-//
-//	int oldVertexCount = object->vertexCount;
-//	int oldIndexCount = object->indexCount;
-//
-//	// I SHOULD REALLY ONLY RESIZE ONCE
-//	Vector3* temp = new Vector3[object->vertexCount + 42];
-//	for (int i = 0; i < oldVertexCount; i++)
-//		temp[i] = object->vertices[i];
-//	delete[] object->vertices;
-//	object->vertices = temp;
-//
-//	int* temp2 = new int[object->indexCount * 4];
-//	for (int i = 0; i < oldIndexCount; i++)
-//		temp2[i] = object->indices[i];
-//	delete[] object->indices;
-//	object->indices = temp2;
-//
-//	for (int i = 0; i < oldIndexCount; i += 3)
-//	{
-//		int oldIndexA = object->indices[i];
-//		int oldIndexB = object->indices[i + 1];
-//		int oldIndexC = object->indices[i + 2];
-//
-//		Vector3 A = object->vertices[object->indices[i]];
-//		Vector3 B = object->vertices[object->indices[i + 1]];
-//		Vector3 C = object->vertices[object->indices[i + 2]];
-//
-//		Vector3 new1 = { (A.x + B.x) / 2, (A.y + B.y) / 2, (A.z + B.z) / 2 };
-//		Vector3 new2 = { (B.x + C.x) / 2, (B.y + C.y) / 2, (B.z + C.z) / 2 };
-//		Vector3 new3 = { (C.x + A.x) / 2, (C.y + A.y) / 2, (C.z + A.z) / 2 };
-//
-//		Normalize(A);
-//		Normalize(B);
-//		Normalize(C);
-//
-//		Normalize(new1);
-//		Normalize(new2);
-//		Normalize(new3);
-//
-//		int newIndex3;
-//		int newIndex2;
-//		int newIndex1;
-//
-//		bool found1 = false;
-//		bool found2 = false;
-//		bool found3 = false;
-//		// doubleing point imprecision??
-//		for (int j = oldVertexCount; j < object->vertexCount; j++)
-//			if (object->vertices[j].x == new1.x && object->vertices[j].y == new1.y && object->vertices[j].z == new1.z)
-//			{
-//				found1 = true;
-//				newIndex1 = j;
-//				//break;
-//			}
-//			else if (object->vertices[j].x == new2.x && object->vertices[j].y == new2.y && object->vertices[j].z == new2.z)
-//			{
-//				found2 = true;
-//				newIndex2 = j;
-//				//break;
-//			}
-//			else if (object->vertices[j].x == new3.x && object->vertices[j].y == new3.y && object->vertices[j].z == new3.z)
-//			{
-//				found3 = true;
-//				newIndex3 = j;
-//				//break;
-//			}
-//
-//		if (found1 == false)
-//		{
-//			object->vertexCount++;
-//			object->vertices[object->vertexCount - 1] = new1;
-//			newIndex1 = object->vertexCount - 1;
-//		}
-//
-//		if (found2 == false)
-//		{
-//			object->vertexCount++;
-//			object->vertices[object->vertexCount - 1] = new2;
-//			newIndex2 = object->vertexCount - 1;
-//		}
-//
-//		if (found3 == false)
-//		{
-//			object->vertexCount++;
-//			object->vertices[object->vertexCount - 1] = new3;
-//			newIndex3 = object->vertexCount - 1;
-//		}
-//
-//		//if (found1 == false)
-//		//{
-//		//	object->vertexCount++;
-//		//	object->vertices[object->vertexCount - 1] = new3;
-//		//}
-//
-//		//if (found2 == false)
-//		//{
-//		//	object->vertexCount++; found the error?
-//		//	object->vertices[object->vertexCount - 2] = new2;
-//		//}										   ^~~~~~
-//
-//		//if (found3 == false)
-//		//{
-//		//	object->vertexCount++;
-//		//	object->vertices[object->vertexCount - 3] = new1;
-//		//}
-//
-//		object->indexCount += 9;
-//
-//		// change old one
-//		object->indices[i] = oldIndexA;
-//		object->indices[i + 1] = newIndex3;
-//		object->indices[i + 2] = newIndex1;
-//
-//		// new ones
-//		object->indices[object->indexCount - 7] = newIndex1;
-//		object->indices[object->indexCount - 8] = newIndex3;
-//		object->indices[object->indexCount - 9] = newIndex2;
-//
-//		object->indices[object->indexCount - 6] = newIndex1;
-//		object->indices[object->indexCount - 5] = newIndex2;
-//		object->indices[object->indexCount - 4] = oldIndexB;
-//
-//		object->indices[object->indexCount - 3] = newIndex3;
-//		object->indices[object->indexCount - 2] = oldIndexC;
-//		object->indices[object->indexCount - 1] = newIndex2;
-//	}
-//
-//	object->position = position;
-//	object->scale = scale;
-//	object->rotation = rotation;
-//	object->color = color;
-//
-//	return object;
-//}
+
