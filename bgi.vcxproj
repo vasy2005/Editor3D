@@ -98,6 +98,14 @@
     <ClInclude Include="lib\bgi\winbgi.h" />
     <ClInclude Include="lib\bgi\winbgim.h" />
     <ClInclude Include="lib\bgi\winbgitypes.h" />
+    <ClInclude Include="src\constants.h" />
+    <ClInclude Include="src\draw.h" />
+    <ClInclude Include="src\file_io.h" />
+    <ClInclude Include="src\globals.h" />
+    <ClInclude Include="src\input.h" />
+    <ClInclude Include="src\object.h" />
+    <ClInclude Include="src\structs.h" />
+    <ClInclude Include="src\vector_math.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
