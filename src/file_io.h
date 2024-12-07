@@ -4,6 +4,7 @@
 #include <cstring>
 #include <windows.h>
 #include "structs.h"
+#include "vector_math.h"
 
 using namespace std;
 
@@ -62,7 +63,64 @@ void SaveAsTri(char filePath[], Object**& objects, int& objectCount, Flags*& fla
 
 void SaveAsObj(char filePath[], Object**& objects, int& objectCount, Flags*& flags)
 {
+	// .obj files store color information separetely in a .mtl file
+	char mtlName[512];
+	strcpy(mtlName, filePath);
+	while (strchr(mtlName, '\\'))
+		strcpy(mtlName, strchr(mtlName, '\\') + 1);
+	strcpy(mtlName + strlen(mtlName) - 4, ".mtl");
 
+	char mtlPath[512];
+	strcpy(mtlPath, filePath);
+	strcpy(mtlPath + strlen(mtlPath) - 4, ".mtl");
+
+
+
+	///// OBJ ////////////////////////////////////////////////////////////////////////////////////////
+	ofstream obj(filePath);
+	obj << "mtllib " << mtlName << '\n';
+	
+
+	int counter = 0;
+
+	for (int i = 0; i < objectCount; i++)
+	{
+		obj << "o Object" << i << '\n';
+
+		for (int j = 0; j < objects[i]->vertexCount; j++)
+		{
+			Vector3 vec = objects[i]->vertices[j];
+			Rotate(vec, objects[i]->rotation);
+			Scale(vec, objects[i]->scale);
+			Translate(vec, {objects[i]->position.x - windowWidth/2, objects[i]->position.y - windowHeight/2, objects[i]->position.z});
+			
+			obj << "v " << vec.x << ' ' << -vec.y << ' ' << vec.z << '\n';
+		}
+
+		obj << "usemtl Material" << i << '\n';
+
+		for (int j = 0; j < objects[i]->indexCount; j++)
+			obj << "f " << objects[i]->indices[j][0] + 1 + counter << ' ' << objects[i]->indices[j][1] + 1 + counter << ' ' << objects[i]->indices[j][2] + 1 + counter << '\n';
+
+		counter += objects[i]->vertexCount;
+	}
+
+	obj.close();
+	//////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+	///// MTL ////////////////////////////////////////////////////////////////////////////////////////
+	ofstream mtl(mtlPath);
+
+	for (int i = 0; i < objectCount; i++)
+	{
+		mtl << "newmtl Material" << i << '\n';
+		mtl << "Kd " << objects[i]->color.r/255.0 << ' ' << objects[i]->color.g/255.0 << ' ' << objects[i]->color.b/255.0 << '\n';
+	}
+
+	mtl.close();
+	//////////////////////////////////////////////////////////////////////////////////////////////////
 }
 
 void Save(Object**& objects, int& objectCount, Flags*& flags)
@@ -72,7 +130,7 @@ void Save(Object**& objects, int& objectCount, Flags*& flags)
 
 	dialogue.lStructSize = sizeof(dialogue);
 	dialogue.hwndOwner = flags->windowHandle;
-	dialogue.lpstrFilter = "3D Scene File (*.tri)\0*.tri\0";
+	dialogue.lpstrFilter = "All Files (*.*)\0*.*\0Tridimensional File (*.tri)\0*.tri\0Wavefront File (*.obj)\0*.obj\0";
 	dialogue.lpstrFile = filePath;
 	dialogue.nMaxFile = 512;
 	dialogue.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
@@ -88,6 +146,8 @@ void Save(Object**& objects, int& objectCount, Flags*& flags)
 
 		else if (strstr(filePath, ".obj"))
 			SaveAsObj(filePath, objects, objectCount, flags);
+		// else
+		// TODO display a warning message that the file extension is not accepted
 	}
 }
 
@@ -109,7 +169,7 @@ void OpenTri(char filePath[], Object**& objects, int& objectCount, Flags*& flags
 	SkipFileLines(fin, 2); // leftover '\n' after last read numeric value. skip extra line because of that
 
 	// resize objects
-	Object** temp = new Object * [objectCount];
+	Object** temp = new Object*[objectCount];
 	delete[] objects;
 	objects = temp;
 
@@ -166,7 +226,186 @@ void OpenTri(char filePath[], Object**& objects, int& objectCount, Flags*& flags
 
 void OpenObj(char filePath[], Object**& objects, int& objectCount, Flags*& flags)
 {
+	// .obj files store color information separetely in a .mtl file
+	char mtlName[512];
+	strcpy(mtlName, filePath);
+	while (strchr(mtlName, '\\'))
+		strcpy(mtlName, strchr(mtlName, '\\') + 1);
+	strcpy(mtlName + strlen(mtlName) - 4, ".mtl");
 
+	char mtlPath[512];
+	strcpy(mtlPath, filePath);
+	strcpy(mtlPath + strlen(mtlPath) - 4, ".mtl");
+
+
+
+	///// OBJ ////////////////////////////////////////////////////////////////////////////////////////
+	ifstream obj(filePath);
+
+	delete[] objects;
+	flags->objectCapacity = 16;
+	objects = new Object*[flags->objectCapacity];
+	objectCount = 0;
+
+	Object* current = NULL;
+
+	int counter = 0;
+
+	while (1)
+	{
+		char type[256]; obj >> type;
+
+		if (type[0] == NULL)
+		{
+			break;
+		}
+		else if (strcmp(type, "o") == 0)
+		{
+			if(objectCount > 0)
+				counter += objects[objectCount - 1]->vertexCount;
+
+			objectCount++;
+			if (objectCount > flags->objectCapacity)
+			{
+				flags->objectCapacity *= 2;
+				Object** temp = new Object*[flags->objectCapacity];
+				memcpy(temp, objects, sizeof(Object*) * objectCount);
+				delete[] objects;
+				objects = temp;
+			}
+
+			current = objects[objectCount - 1] = new Object;
+
+			current->position = {windowWidth/2, windowHeight/2, 0};
+			current->scale = { 100, 100, 100 };
+			current->color = { 255, 255, 255 };
+
+			current->vertexCount = 0;
+			current->vertices = NULL;
+			current->indexCount  = 0;
+			current->indices  = NULL;
+
+			SkipFileLines(obj, 1);
+		}
+		else if (strcmp(type, "v") == 0)
+		{
+			Vector3 vec;
+			obj >> vec.x >> vec.y >> vec.z;
+
+			current->vertexCount++;
+			Vector3* temp = new Vector3[current->vertexCount];
+			if (current->vertices != NULL)
+			{
+				memcpy(temp, current->vertices, (current->vertexCount - 1) * sizeof(Vector3));
+				delete[] current->vertices;
+			}
+			current->vertices = temp;
+
+			current->vertices[current->vertexCount - 1] = {vec.x, -vec.y, vec.z};
+
+			obj.ignore(1); // skip '\n'
+		}
+		else if (strcmp(type, "f") == 0)
+		{
+			int first, second, third, fourth;
+			obj >> first;
+			obj.ignore(512, ' ');
+			obj >> second;
+			obj.ignore(512, ' ');
+			obj >> third;
+			obj.ignore(512, ' ');
+			obj >> fourth;
+
+			current->indexCount += 2;
+			int** temp = new int*[current->indexCount];
+			if (current->indices != NULL)
+			{
+				for (int i = 0; i < current->indexCount - 2; i++)
+				{
+					temp[i] = new int[3];
+					
+					temp[i][0] = current->indices[i][0];
+					temp[i][1] = current->indices[i][1];
+					temp[i][2] = current->indices[i][2];
+				}
+				delete[] current->indices;
+			}
+			current->indices = temp;
+
+			current->indices[current->indexCount - 2] = new int[3];
+
+			current->indices[current->indexCount - 2][0] = first  - counter - 1;
+			current->indices[current->indexCount - 2][1] = third  - counter - 1;
+			current->indices[current->indexCount - 2][2] = second - counter - 1;
+
+			current->indices[current->indexCount - 1] = new int[3];
+
+			current->indices[current->indexCount - 1][0] = first  - counter - 1;
+			current->indices[current->indexCount - 1][1] = fourth - counter - 1;
+			current->indices[current->indexCount - 1][2] = third  - counter - 1;
+
+			obj.ignore(512, '\n');
+		}
+		else
+			SkipFileLines(obj, 1);
+	}
+
+	for (int i = 0; i < objectCount; i++)
+	{
+		current = objects[i];
+
+		current->ad = new bool* [current->vertexCount];
+		for (int i = 0; i < current->vertexCount; i++)
+		{
+			current->ad[i] = new bool[current->vertexCount];
+
+			for (int j = 0; j < current->vertexCount; j++)
+				current->ad[i][j] = 0;
+		}
+	}
+
+	obj.close();
+	//////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+	///// MTL ////////////////////////////////////////////////////////////////////////////////////////
+	ifstream mtl(mtlPath); // TODO what if there's not mtl file?
+
+	int index = -1;
+
+	while (1)
+	{
+		char type[256]; mtl >> type;
+
+		if (type[0] == NULL)
+		{
+			break;
+		}
+		else if (strcmp(type, "newmtl") == 0)
+		{
+			index++;
+			mtl.ignore(512, '\n');
+		}
+		else if (strcmp(type, "Kd") == 0)
+		{
+			double r, g, b;
+			mtl >> r >> g >> b;
+
+			r *= 255;
+			g *= 255;
+			b *= 255;
+
+			objects[index]->color = { (int)r, (int)g, (int)b };
+
+			mtl.ignore(1);
+		}
+		else if(type[0] != '\n')
+			SkipFileLines(mtl, 1);
+	}
+
+	mtl.close();
+	//////////////////////////////////////////////////////////////////////////////////////////////////
 }
 
 void Open(Object**& objects, int& objectCount, Flags*& flags)
@@ -176,7 +415,7 @@ void Open(Object**& objects, int& objectCount, Flags*& flags)
 
 	dialogue.lStructSize = sizeof(dialogue);
 	dialogue.hwndOwner = flags->windowHandle;
-	dialogue.lpstrFilter = "3D Scene File (*.tri)\0*.tri\0";
+	dialogue.lpstrFilter = "All Files (*.*)\0*.*\0Tridimensional File (*.tri)\0*.tri\0Wavefront File (*.obj)\0*.obj\0";
 	dialogue.lpstrFile = filePath;
 	dialogue.nMaxFile = 512;
 	dialogue.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
