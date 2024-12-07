@@ -17,7 +17,10 @@ int main()
 
 	Flags* flags = new Flags;
 	flags->windowHandle = FindWindow(NULL, "Editor3D");
-	ShowWindow(flags->windowHandle, SW_MAXIMIZE);
+
+	// fullscreen
+	SetWindowLongPtr(flags->windowHandle, GWL_STYLE, WS_POPUP | WS_VISIBLE | WS_MINIMIZEBOX);
+	SetWindowPos(flags->windowHandle, NULL, 0, 0, 1920, 1080, SWP_NOZORDER);
 
 	Object** objects = new Object*[flags->objectCapacity]; // init with capacity of 16, resize later
 	int objectCount = 0;
