@@ -7,16 +7,27 @@
 #include "file_io.h"
 #include "globals.h"
 
+#include <iostream>
+
 using namespace std;
 
 
+
+void Quit(Flags*& flags)
+{
+	// enervant
+	//int flag = MessageBox(flags->windowHandle, "Are you sure you want to exit?", "Warning!", MB_YESNO | MB_ICONEXCLAMATION);
+
+	//if (flag == IDYES)
+		flags->windowShouldClose = true;
+}
 
 bool IsPressed(int key)
 {
 	return (GetAsyncKeyState(key) & 0x8000);
 }
 
-void ProcessInput(Object**& objects, int& objectCount, Flags*& flags)
+void ProcessInput(Object**& objects, int& objectCount, Flags*& flags, Menu*& menu)
 {
 	int mouseX = mousex();
 	int mouseY = mousey();
@@ -25,9 +36,13 @@ void ProcessInput(Object**& objects, int& objectCount, Flags*& flags)
 
 	// close the app by pressing ESC
 	if (IsPressed(VK_ESCAPE))
-		flags->windowShouldClose = true;
+		Quit(flags);
 
 
+
+	// new scene with CTRL + N
+	if (IsPressed(VK_CONTROL) && IsPressed('N'))
+		NewScene(objects, objectCount, flags);
 
 	// save files with CTRL + S
 	if (IsPressed(VK_CONTROL) && IsPressed('S'))
@@ -77,15 +92,104 @@ void ProcessInput(Object**& objects, int& objectCount, Flags*& flags)
 					RandomizeObjectProperties(objects[objectCount - 1]);
 
 				// flags->selectedObject = objects[objectCount - 1];
-				// flags->updateWindow = true;
+				flags->updateWindow = true;
 				flags->pressedSpace = true;
-
-				// cout << objectCount << '/' << flags->objectCapacity << '\n';
 			}
 		}
 	}
 	else
 		flags->pressedSpace = false;
+
+	// handle the button click event after the animation plays out
+	if (flags->selectedButton != -1)
+	{
+		if (flags->buttonAnimation == 0)
+		{
+			Sleep(250);
+			menu->buttons[flags->selectedButton].pressed = false;
+		}
+
+		if (flags->buttonAnimation == 2)
+		{
+			switch (flags->selectedButton)
+			{
+				case 0: // close
+					Quit(flags);
+					break;
+
+				case 1: // new
+					NewScene(objects, objectCount, flags);
+					break;
+
+				case 2: // save
+					Save(objects, objectCount, flags);
+					break;
+
+				case 3: // open
+					Open(objects, objectCount, flags);
+					break;
+
+				case 4:
+					CHOOSECOLOR dialogue = {0};
+					COLORREF result      = WHITE;
+					COLORREF custom[16];
+
+					dialogue.lStructSize  = sizeof(dialogue);
+					dialogue.Flags        = CC_RGBINIT | CC_FULLOPEN | CC_ANYCOLOR;
+					dialogue.hwndOwner    = flags->windowHandle;
+					dialogue.rgbResult    = result;
+					dialogue.lpCustColors = custom;
+
+					int error = ChooseColor(&dialogue);
+
+					if (error != 0)
+					{
+						if (selectedObject != NULL)
+							selectedObject->color = {GetRValue(dialogue.rgbResult), GetGValue(dialogue.rgbResult), GetBValue(dialogue.rgbResult)};
+					}
+
+					break;
+			}
+
+			flags->selectedButton = -1;
+		}
+
+		flags->buttonAnimation++;
+	}
+
+	// check button pressed
+	if (IsPressed(VK_LBUTTON))
+	{
+		if (flags->pressedLeftClick == false)
+		{
+			for (int i = 0; i < menu->buttonCount; i++)
+			{
+				int left   = menu->buttons[i].center.x - menu->buttons[i].width/2;
+				int right  = menu->buttons[i].center.x + menu->buttons[i].width/2;
+				int top    = menu->buttons[i].center.y - menu->buttons[i].height/2;
+				int bottom = menu->buttons[i].center.y + menu->buttons[i].height/2;
+
+				if (mouseX >= left && mouseX <= right && mouseY >= top && mouseY <= bottom)
+				{
+					flags->buttonAnimation = 0;
+					flags->selectedButton = i;
+					menu->buttons[i].pressed = true;
+					break;
+				}
+			}
+
+			flags->pressedLeftClick = true;
+		}
+	}
+	else
+		flags->pressedLeftClick = false;
+
+	// this is bad. need to update only if object actually changes
+	if (IsPressed(VK_LBUTTON) || IsPressed(VK_RBUTTON) || IsPressed(VK_MBUTTON) || flags->oldMouseX != mouseX || flags->oldMouseY != mouseY)
+		flags->updateWindow = true;
+
+	flags->oldMouseX = mouseX;
+	flags->oldMouseY = mouseY;
 }
 
 

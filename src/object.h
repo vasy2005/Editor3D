@@ -8,6 +8,21 @@ using namespace std;
 
 
 
+void NewScene(Object**& objects, int& objectCount, Flags*& flags)
+{
+	int flag = MessageBox(flags->windowHandle, "Unsaved changes will be lost. Proceed?", "Warning!", MB_YESNO | MB_ICONEXCLAMATION);
+
+	if (flag == IDYES)
+	{
+		flags->objectCapacity = 16;
+		delete[] objects;
+		objects = new Object * [16];
+		objectCount = 0;
+
+		flags->updateWindow = true;
+	}
+}
+
 void deleteVertex(int vertex, Object* object)
 {
 	// Remove triangles containing the vertex
