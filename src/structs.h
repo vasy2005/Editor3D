@@ -62,29 +62,3 @@ struct Flags
 
 	char cwd[512]; // folderul in care a fost deschisa aplicatia. cand dai open la un fiser se schimba folderul
 };
-
-
-
-
-
-struct Button
-{
-	Vector2 center;
-	int width, height;
-
-	char text[256] = "";
-	char imagePath[256] = "";
-	char pressedImagePath[256] = "";
-
-	int textColor   = RGB(184, 211, 255);
-	int backColor   = RGB(47, 99, 185);
-	int shadowColor = RGB(23, 46, 164);
-
-	bool pressed = false;
-};
-
-struct Menu
-{
-	Button buttons[5];
-	int buttonCount = sizeof(buttons)/sizeof(Button);
-};

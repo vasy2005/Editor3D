@@ -6,6 +6,7 @@
 #include "object.h"
 #include "file_io.h"
 #include "globals.h"
+#include "menu.h"
 
 #include <iostream>
 
@@ -185,7 +186,7 @@ void ProcessInput(Object**& objects, int& objectCount, Flags*& flags, Menu*& men
 		flags->pressedLeftClick = false;
 
 	// this is bad. need to update only if object actually changes
-	if (IsPressed(VK_LBUTTON) || IsPressed(VK_RBUTTON) || IsPressed(VK_MBUTTON) || flags->oldMouseX != mouseX || flags->oldMouseY != mouseY)
+	if (IsPressed(VK_LBUTTON) || IsPressed(VK_RBUTTON) || IsPressed(VK_MBUTTON) || flags->oldMouseX != mouseX || flags->oldMouseY != mouseY || IsPressed('Q'))
 		flags->updateWindow = true;
 
 	flags->oldMouseX = mouseX;
@@ -341,7 +342,7 @@ void getMouseInputPos(Object* object[], int n)
 void checkKeyPressed()
 {
 	bool static pressed = 0;
-	if (GetKeyState('Q') & 0x8000)
+	if (GetAsyncKeyState('Q') & 0x8000)
 	{
 		if (pressed) return;
 		pressed = 1;

@@ -6,6 +6,8 @@
 #include "structs.h"
 #include "vector_math.h"
 
+#include <iostream>
+
 using namespace std;
 
 
@@ -277,7 +279,7 @@ void OpenObj(char filePath[], Object**& objects, int& objectCount, Flags*& flags
 			current = objects[objectCount - 1] = new Object;
 
 			current->position = {windowWidth/2, windowHeight/2, 0};
-			current->scale = { 100, 100, 100 };
+			current->scale = {  20,  20,  20 };
 			current->color = { 255, 255, 255 };
 
 			current->vertexCount = 0;
@@ -307,49 +309,61 @@ void OpenObj(char filePath[], Object**& objects, int& objectCount, Flags*& flags
 		}
 		else if (strcmp(type, "f") == 0)
 		{
-			int first, second, third, fourth;
+			int first, second, third;
 			obj >> first;
 			obj.ignore(512, ' ');
 			obj >> second;
 			obj.ignore(512, ' ');
-			obj >> third;
-			obj.ignore(512, ' ');
-			obj >> fourth;
 
-			current->indexCount += 2;
-			int** temp = new int*[current->indexCount];
-			if (current->indices != NULL)
+			bool stop = false;
+
+			while (stop == false)
 			{
-				for (int i = 0; i < current->indexCount - 2; i++)
+				obj >> third;
+
+				current->indexCount++;
+				int** temp = new int* [current->indexCount];
+				if (current->indices != NULL)
 				{
-					temp[i] = new int[3];
-					
-					temp[i][0] = current->indices[i][0];
-					temp[i][1] = current->indices[i][1];
-					temp[i][2] = current->indices[i][2];
+					for (int i = 0; i < current->indexCount - 1; i++)
+					{
+						temp[i] = new int[3];
+
+						temp[i][0] = current->indices[i][0];
+						temp[i][1] = current->indices[i][1];
+						temp[i][2] = current->indices[i][2];
+					}
+					delete[] current->indices;
 				}
-				delete[] current->indices;
+				current->indices = temp;
+
+				current->indices[current->indexCount - 1] = new int[3];
+
+				current->indices[current->indexCount - 1][0] = first  - counter - 1;
+				current->indices[current->indexCount - 1][1] = third  - counter - 1;
+				current->indices[current->indexCount - 1][2] = second - counter - 1;
+
+				char c[1];
+				while (obj.read(c, 1)) // dont skip whitespace
+				{
+					if (c[0] == ' ')
+						break;
+
+					if (c[0] == '\n')
+					{
+						stop = true;
+						break;
+					}
+				}
+
+				second = third;
 			}
-			current->indices = temp;
-
-			current->indices[current->indexCount - 2] = new int[3];
-
-			current->indices[current->indexCount - 2][0] = first  - counter - 1;
-			current->indices[current->indexCount - 2][1] = third  - counter - 1;
-			current->indices[current->indexCount - 2][2] = second - counter - 1;
-
-			current->indices[current->indexCount - 1] = new int[3];
-
-			current->indices[current->indexCount - 1][0] = first  - counter - 1;
-			current->indices[current->indexCount - 1][1] = fourth - counter - 1;
-			current->indices[current->indexCount - 1][2] = third  - counter - 1;
-
-			obj.ignore(512, '\n');
 		}
 		else
 			SkipFileLines(obj, 1);
 	}
 
+	// TODO
 	for (int i = 0; i < objectCount; i++)
 	{
 		current = objects[i];
