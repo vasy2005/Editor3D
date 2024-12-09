@@ -15,11 +15,11 @@ void DrawLine(Vector3 first, Vector3 second)
 	line(first.x, first.y, second.x, second.y);
 }
 
-void DrawTriangle(int indice[3], Object* object, Object* orig)
+void DrawTriangle(int indice[3], Object* object)
 {
-	Vector3* first = &object->vertices[indice[0]];
-	Vector3* second = &object->vertices[indice[1]];
-	Vector3* third = &object->vertices[indice[2]];
+	Vector3* first = &object->realVertices[indice[0]];
+	Vector3* second = &object->realVertices[indice[1]];
+	Vector3* third = &object->realVertices[indice[2]];
 
 	Vector3 normal = SurfaceNormal(*first, *second, *third);
 	Normalize(normal);
@@ -61,7 +61,7 @@ void DrawTriangle(int indice[3], Object* object, Object* orig)
 		//Object HitBox
 		for (int j = 0; j < 3; ++j)
 		{
-			Vector3* crt = &object->vertices[indice[j]];
+			Vector3* crt = &object->realVertices[indice[j]];
 			object->hitBox[0].x = min(object->hitBox[0].x, crt->x);
 			object->hitBox[0].y = min(object->hitBox[0].y, crt->y);
 			object->hitBox[1].x = max(object->hitBox[1].x, crt->x);
@@ -84,24 +84,8 @@ void DrawTriangle(int indice[3], Object* object, Object* orig)
 
 void DrawObject(Object* object)
 {
-	//copy object
-	Object* crt = new Object;
-	crt->vertexCount = object->vertexCount;
-	crt->indexCount = object->indexCount;
-	crt->position = object->position; crt->rotation = object->rotation;
-	crt->scale = object->scale; crt->color = object->color;
-	crt->vertices = new Vector3[object->vertexCount];
-	memcpy(crt->vertices, object->vertices, sizeof(Vector3) * object->vertexCount);
-
-	crt->indices = new int* [object->indexCount];
-	for (int i = 0; i < object->indexCount; ++i)
-	{
-		crt->indices[i] = new int[3];
-		memcpy(crt->indices[i], object->indices[i], sizeof(int[3]));
-	}
-
-	crt->hitBox[0] = { INF, INF };
-	crt->hitBox[1] = { -1, -1 };
+	object->hitBox[0] = { INF, INF };
+	object->hitBox[1] = { -1, -1 };
 
 	//object->rotation.x = object->rotation.x - floor(object->rotation.x);
 	//object->rotation.y = object->rotation.y - floor(object->rotation.y);
@@ -110,10 +94,11 @@ void DrawObject(Object* object)
 	//transform object
 	for (int i = 0; i < object->vertexCount; i++)
 	{
+		object->realVertices[i] = object->vertices[i];
 		Rotate(object->vertices[i], object->rotation);
-		Rotate(crt->vertices[i], crt->rotation);
-		Scale(crt->vertices[i], crt->scale);
-		Translate(crt->vertices[i], crt->position);
+		Rotate(object->realVertices[i], object->rotation);
+		Scale(object->realVertices[i], object->scale);
+		Translate(object->realVertices[i], object->position);
 		//Rotate(copy_vertices[i], object->rotation);
 		//Scale(copy_vertices[i], object->scale);
 		//Translate(copy_vertices[i], object->position);
@@ -123,18 +108,9 @@ void DrawObject(Object* object)
 		//Translate(object->vertices[i], {windowWidth/2, windowHeight/2, 0});
 	}
 
-	memcpy(object->realVertices, crt->vertices, sizeof(Vector3) * object->vertexCount);
 
-	for (int i = 0; i < crt->indexCount; i++)
-		DrawTriangle(crt->indices[i], crt, object);
-
-	object->hitBox[0] = crt->hitBox[0];
-	object->hitBox[1] = crt->hitBox[1];
-
-	for (int i = 0; i < crt->indexCount; i++)
-		delete[] crt->indices[i];
-	delete[] crt->vertices;
-	delete crt;
+	for (int i = 0; i < object->indexCount; i++)
+		DrawTriangle(object->indices[i], object);
 
 	object->rotation = { 0, 0, 0 };
 }
