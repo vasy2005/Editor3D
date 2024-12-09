@@ -13,7 +13,6 @@
 using namespace std;
 
 
-
 void Quit(Flags*& flags)
 {
 	// enervant
@@ -34,6 +33,27 @@ void ProcessInput(Object**& objects, int& objectCount, Flags*& flags, Menu*& men
 	int mouseY = mousey();
 
 
+	if (flags->oldMouseX != mouseX || flags->oldMouseY != mouseY)
+	{
+		int prevSelected = selectedVertice;
+		selectedVertice = -1;
+		for (int i = 0; i < objectCount; ++i)
+		{
+			for (int j = 0; j < objects[i]->vertexCount; ++j)
+			{
+				Vector3 crtPoint = objects[i]->realVertices[j];
+				if (abs(crtPoint.x - mouseX) <= rad && abs(crtPoint.y - mouseY) <= rad)
+				{
+					//selected point
+					selectedVertice = j; selectedObject = objects[i];
+					flags->updateWindow = 1;
+				}
+			}
+		}
+		if (prevSelected != selectedVertice)
+			flags->updateWindow = 1;
+	}
+
 
 	// close the app by pressing ESC
 	if (IsPressed(VK_ESCAPE))
@@ -52,6 +72,12 @@ void ProcessInput(Object**& objects, int& objectCount, Flags*& flags, Menu*& men
 	// open files with CTRL + O
 	if (IsPressed(VK_CONTROL) && IsPressed('O'))
 		Open(objects, objectCount, flags);
+
+	if (IsPressed(VK_CONTROL) && IsPressed('T'))
+	{
+		flags->showRedDot = !flags->showRedDot;
+		flags->updateWindow = 1;
+	}
 
 
 
@@ -186,8 +212,8 @@ void ProcessInput(Object**& objects, int& objectCount, Flags*& flags, Menu*& men
 		flags->pressedLeftClick = false;
 
 	// this is bad. need to update only if object actually changes
-	if (IsPressed(VK_LBUTTON) || IsPressed(VK_RBUTTON) || IsPressed(VK_MBUTTON) || flags->oldMouseX != mouseX || flags->oldMouseY != mouseY || IsPressed('Q'))
-		flags->updateWindow = true;
+	/*if (IsPressed(VK_LBUTTON) || IsPressed(VK_RBUTTON) || IsPressed(VK_MBUTTON) || flags->oldMouseX != mouseX || flags->oldMouseY != mouseY || IsPressed('Q'))
+		flags->updateWindow = true;*/
 
 	flags->oldMouseX = mouseX;
 	flags->oldMouseY = mouseY;
@@ -239,10 +265,13 @@ void getMouseInputRot(Object* object[], int n)
 			}
 		}
 		clearmouseclick(WM_RBUTTONDOWN);
+		flags->updateWindow = 1;
 		return;
 	}
 
 	if (!mouse) return;
+	else
+		flags->updateWindow = 1;
 
 
 	object[crt]->rotation = { object[crt]->rotation.x - (y - inity) / 180, object[crt]->rotation.y + (x - initx) / 180, object[crt]->rotation.z };
@@ -281,10 +310,13 @@ void getMouseInputScale(Object* object[], int n)
 			}
 		}
 		clearmouseclick(WM_MBUTTONDOWN);
+		flags->updateWindow = 1;
 		return;
 	}
 
 	if (!mouseS) return;
+	else
+		flags->updateWindow = 1;
 
 	int a = x - initxS;
 	int b = y - inityS;
@@ -310,6 +342,7 @@ void getMouseInputPos(Object* object[], int n)
 	double x = mousex(), y = mousey();
 	if (ismouseclick(WM_LBUTTONDOWN))
 	{
+		flags->updateWindow = 1;
 		if (selectedVertice != -1)
 		{
 			selectedObject->vertices[selectedVertice].x = (x - selectedObject->position.x) / selectedObject->scale.x;
@@ -337,6 +370,9 @@ void getMouseInputPos(Object* object[], int n)
 
 	}
 
+	if (mouseP)
+		flags->updateWindow = 1;
+
 }
 
 void checkKeyPressed()
@@ -347,7 +383,10 @@ void checkKeyPressed()
 		if (pressed) return;
 		pressed = 1;
 		if (selectedVertice != -1)
+		{
 			deleteVertex(selectedVertice, selectedObject);
+			flags->updateWindow = 1;
+		}
 		return;
 	}
 

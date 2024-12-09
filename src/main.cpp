@@ -1,5 +1,6 @@
 #include <graphics.h>
 
+
 #include "structs.h"
 #include "input.h"
 #include "draw.h"
@@ -10,7 +11,6 @@
 using namespace std;
 
 
-
 int main()
 {
 	srand(time(NULL));
@@ -18,7 +18,7 @@ int main()
 	initwindow(windowWidth, windowHeight, "Editor3D");
 	setlinestyle(SOLID_LINE, 0, THICK_WIDTH); // make lines thicker to stop floodfill from flickering
 
-	Flags* flags = new Flags;
+	
 	flags->windowHandle = FindWindow(NULL, "Editor3D");
 
 	// fullscreen
@@ -40,35 +40,35 @@ int main()
 		getMouseInputScale(objects, objectCount);
 		getMouseInputPos(objects, objectCount);
 		checkKeyPressed();
-		selectedVertice = -1;
 
 
 		///// DRAW HERE ///////////////////////////////////////
 		if (flags->updateWindow == true) // only redraw screen if there are changes (keyboard or mouse input detected)
 		{
+			//cout << "TEST";
+			flags->updateWindow = false;
 			setvisualpage(buffer);
 			setactivepage(1 - buffer);
 
 			cleardevice(); // clear previous frame
+			DrawMenu(menu);
 
-			if (selectedObject != NULL)
-				drawHitBox(selectedObject);
+			//if (selectedObject != NULL)
+				//drawHitBox(selectedObject);
 
 			for (int i = 0; i < objectCount; ++i)
 				DrawObject(objects[i]);
 
-			DrawMenu(menu);
 
 			setvisualpage(1 - buffer);
 			buffer = 1 - buffer;
 
-			flags->updateWindow = false;
 			cout << "drawing...\n";
 		}
 		///////////////////////////////////////////////////////
 
 
-		// delay(16); // cap framerate at 60fps
+		 delay(16); // cap framerate at 60fps
 	}
 
 

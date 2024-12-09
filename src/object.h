@@ -159,6 +159,8 @@ Object* NewCube(Vector3 position, Vector3 scale, Vector3 rotation, Color color)
 									   {-0.5f, +0.5f, -0.5f},
 									   {+0.5f, +0.5f, -0.5f},
 									   {+0.5f, -0.5f, -0.5f} };
+	object->realVertices = new Vector3[8];
+	memcpy(object->realVertices, object->vertices, sizeof(Vector3) * object->vertexCount);
 
 	object->indexCount = 12;
 	const int cnt = object->indexCount;
@@ -234,6 +236,9 @@ Object* NewIcosahedron(Vector3 position, Vector3 scale, Vector3 rotation, Color 
 										{ +PHI, -1.0f, 0.0f },
 										{ -PHI, +1.0f, 0.0f },
 										{ +PHI, +1.0f, 0.0f } };
+	object->realVertices = new Vector3[12];
+	memcpy(object->realVertices, object->vertices, sizeof(Vector3) * object->vertexCount);
+
 	object->indexCount = 20;
 	const int cnt = object->indexCount;
 	int aux[20][3] = { {  0,  4,  5 },

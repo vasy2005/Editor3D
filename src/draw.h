@@ -58,25 +58,27 @@ void DrawTriangle(int indice[3], Object* object, Object* orig)
 
 	for (int i = 0; i < 3; ++i)
 	{
-		double rad = 6;
-		if (abs(points[i].x - mousex()) <= rad && abs(points[i].y - mousey()) <= rad)
-		{
-			//selected point
-			rad = 10;
-			selectedVertice = indice[i]; selectedObject = orig;
-		}
-
 		//Object HitBox
-		for (int i = 0; i < 3; ++i)
+		for (int j = 0; j < 3; ++j)
 		{
-			Vector3* crt = &object->vertices[indice[i]];
+			Vector3* crt = &object->vertices[indice[j]];
 			object->hitBox[0].x = min(object->hitBox[0].x, crt->x);
 			object->hitBox[0].y = min(object->hitBox[0].y, crt->y);
 			object->hitBox[1].x = max(object->hitBox[1].x, crt->x);
 			object->hitBox[1].y = max(object->hitBox[1].y, crt->y);
 		}
-		circle(points[i].x, points[i].y, rad);
-		floodfill(points[i].x, points[i].y, RED);
+
+		if (flags->showRedDot)
+		{
+			double rad;
+			if (selectedVertice == indice[i])
+				rad = 10;
+			else
+				rad = 6;
+
+			circle(points[i].x, points[i].y, rad);
+			floodfill(points[i].x, points[i].y, RED);
+		}
 	}
 }
 
@@ -120,6 +122,8 @@ void DrawObject(Object* object)
 		// move (0, 0) to center of screen
 		//Translate(object->vertices[i], {windowWidth/2, windowHeight/2, 0});
 	}
+
+	memcpy(object->realVertices, crt->vertices, sizeof(Vector3) * object->vertexCount);
 
 	for (int i = 0; i < crt->indexCount; i++)
 		DrawTriangle(crt->indices[i], crt, object);

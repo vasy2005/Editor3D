@@ -26,6 +26,8 @@ struct Object
 	Vector3* vertices;
 	int** indices; // triangles
 
+	Vector3* realVertices;
+
 	int vertexCount;
 	int indexCount;
 
@@ -60,5 +62,8 @@ struct Flags
 	int selectedButton = -1;
 	int buttonAnimation;
 
+	bool showRedDot = 1;
+
 	char cwd[512]; // folderul in care a fost deschisa aplicatia. cand dai open la un fiser se schimba folderul
 };
+Flags* flags = new Flags;

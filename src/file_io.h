@@ -185,6 +185,9 @@ void OpenTri(char filePath[], Object**& objects, int& objectCount, Flags*& flags
 		for (int j = 0; j < objects[i]->vertexCount; j++)
 			fin >> objects[i]->vertices[j].x >> objects[i]->vertices[j].y >> objects[i]->vertices[j].z;
 
+		objects[i]->realVertices = new Vector3[objects[i]->vertexCount];
+		memcpy(objects[i]->realVertices, objects[i]->vertices, sizeof(Vector3) * objects[i]->vertexCount);
+
 		SkipFileLines(fin, 3);
 		fin >> objects[i]->indexCount;
 		objects[i]->indices = new int* [objects[i]->indexCount];
@@ -363,10 +366,12 @@ void OpenObj(char filePath[], Object**& objects, int& objectCount, Flags*& flags
 			SkipFileLines(obj, 1);
 	}
 
-	// TODO
 	for (int i = 0; i < objectCount; i++)
 	{
 		current = objects[i];
+
+		objects[i]->realVertices = new Vector3[objects[i]->vertexCount];
+		memcpy(objects[i]->realVertices, objects[i]->vertices, sizeof(Vector3) * objects[i]->vertexCount);
 
 		current->ad = new bool* [current->vertexCount];
 		for (int i = 0; i < current->vertexCount; i++)
@@ -376,7 +381,21 @@ void OpenObj(char filePath[], Object**& objects, int& objectCount, Flags*& flags
 			for (int j = 0; j < current->vertexCount; j++)
 				current->ad[i][j] = 0;
 		}
+
+		for (int i = 0; i < current->indexCount; ++i)
+		{
+			int a = current->indices[i][0];
+			int b = current->indices[i][1];
+			int c = current->indices[i][2];
+
+			current->ad[a][b] = current->ad[b][a] = 1;
+			current->ad[a][c] = current->ad[c][a] = 1;
+			current->ad[b][c] = current->ad[c][b] = 1;
+		}
+			
 	}
+
+
 
 	obj.close();
 	//////////////////////////////////////////////////////////////////////////////////////////////////
@@ -446,4 +465,6 @@ void Open(Object**& objects, int& objectCount, Flags*& flags)
 		else if (strstr(filePath, ".obj"))
 			OpenObj(filePath, objects, objectCount, flags);
 	}
+
+	flags->updateWindow = 1;
 }
