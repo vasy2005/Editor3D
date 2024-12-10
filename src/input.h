@@ -134,6 +134,7 @@ void ProcessInput(Object**& objects, int& objectCount, Flags*& flags, Menu*& men
 		{
 			Sleep(250);
 			menu->buttons[flags->selectedButton].pressed = false;
+			flags->updateWindow = true;
 		}
 
 		if (flags->buttonAnimation == 2)
@@ -173,8 +174,8 @@ void ProcessInput(Object**& objects, int& objectCount, Flags*& flags, Menu*& men
 					{
 						if (selectedObject != NULL)
 							selectedObject->color = {GetRValue(dialogue.rgbResult), GetGValue(dialogue.rgbResult), GetBValue(dialogue.rgbResult)};
+						flags->updateWindow = true;
 					}
-
 					break;
 			}
 
@@ -201,6 +202,7 @@ void ProcessInput(Object**& objects, int& objectCount, Flags*& flags, Menu*& men
 					flags->buttonAnimation = 0;
 					flags->selectedButton = i;
 					menu->buttons[i].pressed = true;
+					flags->updateWindow = true;
 					break;
 				}
 			}

@@ -3,6 +3,7 @@
 #include "constants.h"
 #include "structs.h"
 #include "vector_math.h"
+#include "globals.h"
 
 using namespace std;
 
@@ -21,6 +22,8 @@ void NewScene(Object**& objects, int& objectCount, Flags*& flags)
 
 		flags->updateWindow = true;
 	}
+
+	selectedObject = NULL;
 }
 
 void deleteVertex(int vertex, Object* object)

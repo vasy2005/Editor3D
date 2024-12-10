@@ -51,14 +51,14 @@ int main()
 			setactivepage(1 - buffer);
 
 			cleardevice(); // clear previous frame
-			DrawMenu(menu);
 
-			//if (selectedObject != NULL)
-				//drawHitBox(selectedObject);
+			if (selectedObject != NULL)
+				drawHitBox(selectedObject);
 
 			for (int i = 0; i < objectCount; ++i)
 				DrawObject(objects[i]);
 
+			DrawMenu(menu); // draw over objects
 
 			setvisualpage(1 - buffer);
 			buffer = 1 - buffer;

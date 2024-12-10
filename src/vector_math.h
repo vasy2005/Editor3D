@@ -81,3 +81,13 @@ double dot(Vector3 A, Vector3 B)
 {
 	return A.x * B.x + A.y * B.y + A.z * B.z;
 }
+
+double Distance(Vector3 first, Vector3 second)
+{
+	return sqrt(pow(second.x - first.x, 2) + pow(second.y - first.y, 2) + pow(second.z - first.z, 2));
+}
+
+double Length(Vector3 vector)
+{
+	return Distance(vector, {0, 0, 0});
+}

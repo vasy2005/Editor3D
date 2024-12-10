@@ -256,6 +256,9 @@ void OpenObj(char filePath[], Object**& objects, int& objectCount, Flags*& flags
 
 	int counter = 0;
 
+	Vector3 geometric_center = {0, 0, 0};
+	double average_length = 0;
+
 	while (1)
 	{
 		char type[256]; obj >> type;
@@ -266,6 +269,21 @@ void OpenObj(char filePath[], Object**& objects, int& objectCount, Flags*& flags
 		}
 		else if (strcmp(type, "o") == 0)
 		{
+			// handle old object
+			if (current != NULL)
+			{
+				geometric_center = { geometric_center.x / current->vertexCount, geometric_center.y / current->vertexCount, geometric_center.z / current->vertexCount };
+				for (int i = 0; i < current->vertexCount; i++)
+				{
+					current->vertices[i] = { current->vertices[i].x - geometric_center.x, current->vertices[i].y - geometric_center.y, current->vertices[i].z - geometric_center.z };
+					average_length += Length(current->vertices[i]);
+				}
+
+				average_length /= current->vertexCount;
+				current->position = { geometric_center.x + 1920 / 2, geometric_center.y + 1080 / 2, geometric_center.z };
+				current->scale = { 200 / average_length, 200 / average_length, 200 / average_length };
+			}
+
 			if(objectCount > 0)
 				counter += objects[objectCount - 1]->vertexCount;
 
@@ -281,10 +299,6 @@ void OpenObj(char filePath[], Object**& objects, int& objectCount, Flags*& flags
 
 			current = objects[objectCount - 1] = new Object;
 
-			current->position = {windowWidth/2, windowHeight/2, 0};
-			current->scale = {  20,  20,  20 };
-			current->color = { 255, 255, 255 };
-
 			current->vertexCount = 0;
 			current->vertices = NULL;
 			current->indexCount  = 0;
@@ -296,6 +310,7 @@ void OpenObj(char filePath[], Object**& objects, int& objectCount, Flags*& flags
 		{
 			Vector3 vec;
 			obj >> vec.x >> vec.y >> vec.z;
+			geometric_center = {geometric_center.x + vec.x, geometric_center.y - vec.y, geometric_center.z + vec.z};
 
 			current->vertexCount++;
 			Vector3* temp = new Vector3[current->vertexCount];
@@ -364,6 +379,20 @@ void OpenObj(char filePath[], Object**& objects, int& objectCount, Flags*& flags
 		}
 		else
 			SkipFileLines(obj, 1);
+	}
+
+	if (current != NULL)
+	{
+		geometric_center = { geometric_center.x / current->vertexCount, geometric_center.y / current->vertexCount, geometric_center.z / current->vertexCount };
+		for (int i = 0; i < current->vertexCount; i++)
+		{
+			current->vertices[i] = { current->vertices[i].x - geometric_center.x, current->vertices[i].y - geometric_center.y, current->vertices[i].z - geometric_center.z };
+			average_length += Length(current->vertices[i]);
+		}
+
+		average_length /= current->vertexCount;
+		current->position = {geometric_center.x + 1920/2, geometric_center.y + 1080/2, geometric_center.z};
+		current->scale = { 200 / average_length, 200 / average_length, 200 / average_length };
 	}
 
 	for (int i = 0; i < objectCount; i++)
