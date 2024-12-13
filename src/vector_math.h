@@ -3,6 +3,8 @@
 #include <cmath>
 #include "structs.h"
 
+#include <iostream>
+
 using namespace std;
 
 
@@ -29,6 +31,20 @@ void Transform(double transform_mat[3][3], Vector3& vector)
 				result_mat[i][j] += transform_mat[i][k] * vector_mat[k][j];
 
 	vector = { result_mat[0][0], result_mat[1][0], result_mat[2][0] };
+}
+
+void Transform(double transform_mat[4][4], Vector4& vector)
+{
+	double vector_mat[4][1] = { {vector.x}, {vector.y}, {vector.z}, {vector.w} };
+	double result_mat[4][1] = { {0}, {0}, {0}, {0} };
+
+	// matrix multiplication algorithm
+	for (int i = 0; i < 4; i++)
+		for (int j = 0; j < 1; j++)
+			for (int k = 0; k < 4; k++)
+				result_mat[i][j] += transform_mat[i][k] * vector_mat[k][j];
+
+	vector = { result_mat[0][0], result_mat[1][0], result_mat[2][0], result_mat[3][0] };
 }
 
 void Rotate(Vector3& vector, Vector3 rotation)
@@ -90,4 +106,58 @@ double Distance(Vector3 first, Vector3 second)
 double Length(Vector3 vector)
 {
 	return Distance(vector, {0, 0, 0});
+}
+
+void Print(Vector3 vector)
+{
+	cout << vector.x << ' ' << vector.y << ' ' << vector.z << '\n';
+}
+
+void Print(Vector4 vector)
+{
+	cout << vector.x << ' ' << vector.y << ' ' << vector.z << ' ' << vector.w << '\n';
+}
+
+void Perspective(Vector3& vector)
+{
+	double zFar  = 100.0;
+	double zNear =   0.1;
+
+	double aspect = 1920.0/1080.0;
+	double FOV    = PI/4;
+
+	double f = 1/tan(FOV/2);
+
+	double A = -(zFar + zNear) / (zFar - zNear);
+	double B = -(2 * zFar * zNear) / (zFar - zNear);
+
+	double perspective_mat[4][4] = { { f/aspect, 0,  0, 0 },
+									 {    0,     f,  0, 0 },
+									 {    0,     0,  A, B },
+									 {    0,     0, -1, 0 } };
+
+	Vector4 new_vec = { vector.x, vector.y, vector.z, 1 };
+	Transform(perspective_mat, new_vec);
+
+	// 1250 luat arbitrar daca pui un numar mai mic incep sa fie mai alungite obiectele
+
+	// asta e partea cea mai importanta 
+	// w va tine valoarea veche a lui z
+	// imparti prin z varfurile. obiectele la o distanta mai mare devin mai mici cele mai apropriate devin mai mari
+	vector = {vector.x/(-new_vec.w/1250+1), vector.y/(-new_vec.w/1250+1), vector.z };
+	// TODO ar trebuii verificat pentru impartirea prin 0
+}
+
+void ViewMatrix(Vector3& vector)
+{
+	// schimbare de baza cum am facut la mate
+	// vectorii nus pe coloane pentru ca asta e inversa unei alte matrici defapt
+	double view_matrix[4][4] = { { camera.right.x,   camera.right.y,   camera.right.z,   -camera.position.x },
+								 { camera.up.x,      camera.up.y,      camera.up.z,      -camera.position.y },
+								 { camera.forward.x, camera.forward.y, camera.forward.z, -camera.position.z },
+								 {        0,                0,                0,                 1          } };
+
+	Vector4 vec = { vector.x, vector.y, vector.z, 1 };
+	Transform(view_matrix, vec);
+	vector = { vec.x, vec.y, vec.z };
 }

@@ -46,9 +46,9 @@ void DrawTriangle(int indice[3], Object* object)
 	Vector3 center = { (first->x + second->x + third->x) / 3, (first->y + second->y + third->y) / 3, 0 }; // z might matter later?
 	//final_color += rand() % 100;
 	setfillstyle(SOLID_FILL, final_color);
-	floodfill(center.x, center.y, final_color);
-	//int aux[6] = {first->x, first->y, second->x, second->y, third->x, third->y};
-	//fillpoly(3, aux);
+	
+	int aux[6] = {first->x, first->y, second->x, second->y, third->x, third->y};
+	fillpoly(3, aux);
 
 	//Vertex select
 	setcolor(RED);
@@ -95,19 +95,34 @@ void DrawObject(Object* object)
 	for (int i = 0; i < object->vertexCount; i++)
 	{
 		object->realVertices[i] = object->vertices[i];
+
+		///// LOCAL COORD TO WORLD COORD /////////////////////////////////////
 		Rotate(object->vertices[i], object->rotation);
 		Rotate(object->realVertices[i], object->rotation);
 		Scale(object->realVertices[i], object->scale);
 		Translate(object->realVertices[i], object->position);
-		//Rotate(copy_vertices[i], object->rotation);
-		//Scale(copy_vertices[i], object->scale);
-		//Translate(copy_vertices[i], object->position);
+		//////////////////////////////////////////////////////////
 
+		// WORLD COORD TO CAMEARA RELATIVE COORD
+		ViewMatrix(object->realVertices[i]);
 
-		// move (0, 0) to center of screen
-		//Translate(object->vertices[i], {windowWidth/2, windowHeight/2, 0});
+		Perspective(object->realVertices[i]);
+
+		// nu mai desena obiectele care sunt prea aproape de camera sau in spatele camerei
+		// TODO nici alea prea indepartate nu ar trebuii desenate
+		// momentan nu merge cand intorci camera la 180 de grade
+		if (object->realVertices[i].z < -1200)
+			return;
+
+		// TODO
+		// ar trebuii si o copie a centrului obiectelor trecut prin matrici
+		// si sa tinem vectorul de obiecte sortat crescator dupa valoarea finala a lui z
+		// intai trebuie desenate obiectele mai din spate dupa cele apropiate
+		// ar trebuii resortat dupa o rotire a camerei cred
+
+		// artificially center objects
+		Translate(object->realVertices[i], {windowWidth/2, windowHeight/2, 0});
 	}
-
 
 	for (int i = 0; i < object->indexCount; i++)
 		DrawTriangle(object->indices[i], object);
@@ -122,4 +137,16 @@ void drawHitBox(Object* object)
 
 	setcolor(WHITE);
 	rectangle(first.x, first.y, second.x, second.y);
+}
+
+void DrawAxis()
+{
+	setcolor(RGB(0, 255, 0));
+	line(1920/2, 1080/2, 1920/2 + camera.forward.x * 100, 1080/2 - camera.forward.y * 100);
+
+	setcolor(RGB(255, 0, 0));
+	line(1920 / 2, 1080 / 2, 1920 / 2 + camera.right.x * 100, 1080 / 2 - camera.right.y * 100);
+
+	setcolor(RGB(0, 0, 255));
+	line(1920 / 2, 1080 / 2, 1920 / 2 + camera.up.x * 100, 1080 / 2 - camera.up.y * 100);
 }

@@ -27,11 +27,88 @@ bool IsPressed(int key)
 	return (GetAsyncKeyState(key) & 0x8000);
 }
 
+void CameraControls()
+{
+	int mouseX = mousex();
+	int mouseY = mousey();
+
+	// rotate
+	if (IsPressed(VK_CONTROL) && IsPressed(VK_RBUTTON))
+	{
+		double difX = flags->oldMouseX - mouseX;
+		double difY = flags->oldMouseY - mouseY;
+
+		if (difX != 0 || difY != 0)
+		{
+			// 1000 e luat arbitrar ca sa nu se miste prea rapid
+			camera.rotation = { camera.rotation.x + difY / 1000, camera.rotation.y + difX / 1000, camera.rotation.z };
+
+			camera.forward = { 0, 0, -1 };
+			camera.up = { 0, 1,  0 };
+			camera.right = { 1, 0,  0 };
+
+			Rotate(camera.forward, camera.rotation);
+			Rotate(camera.up, camera.rotation);
+			Rotate(camera.right, camera.rotation);
+
+			flags->updateWindow = true;
+		}
+	}
+
+	double speed = 10;
+
+	// merge anapoda daca folosesc axele relative la camera
+	// tre sa folosesc axele adevarate care nu se schimba
+	if (IsPressed('W'))
+	{
+		//camera.position = { camera.position.x - camera.forward.x * speed, camera.position.y - camera.forward.y * speed, camera.position.z - camera.forward.z * speed };
+		camera.position = { camera.position.x - 0 * speed, camera.position.y - 0 * speed, camera.position.z - -1 * speed };
+		
+		flags->updateWindow = true;
+	}
+
+	if (IsPressed('A'))
+	{
+		//camera.position = { camera.position.x - camera.right.x * speed, camera.position.y - camera.right.y * speed, camera.position.z - camera.right.z * speed };
+		camera.position = { camera.position.x - 1 * speed, camera.position.y - 0 * speed, camera.position.z - 0 * speed };
+		flags->updateWindow = true;
+	}
+
+	if (IsPressed('S'))
+	{
+		//camera.position = { camera.position.x + camera.forward.x * speed, camera.position.y + camera.forward.y * speed, camera.position.z + camera.forward.z * speed };
+		camera.position = { camera.position.x + 0 * speed, camera.position.y + 0 * speed, camera.position.z + -1 * speed };
+		flags->updateWindow = true;
+	}
+
+	if (IsPressed('D'))
+	{
+		//camera.position = { camera.position.x + camera.right.x * speed, camera.position.y + camera.right.y * speed, camera.position.z + camera.right.z * speed };
+		camera.position = { camera.position.x + 1 * speed, camera.position.y + 0 * speed, camera.position.z + 0 * speed };
+		flags->updateWindow = true;
+	}
+
+	if (IsPressed(VK_LSHIFT))
+	{
+		//camera.position = { camera.position.x + camera.up.x * speed, camera.position.y + camera.up.y * speed, camera.position.z + camera.up.z * speed };
+		camera.position = { camera.position.x + 0 * speed, camera.position.y + 1 * speed, camera.position.z + 0 * speed };
+		flags->updateWindow = true;
+	}
+
+	if (IsPressed(VK_SPACE))
+	{
+		//camera.position = { camera.position.x - camera.up.x * speed, camera.position.y - camera.up.y * speed, camera.position.z - camera.up.z * speed };
+		camera.position = { camera.position.x - 0 * speed, camera.position.y - 1 * speed, camera.position.z - 0 * speed };
+		flags->updateWindow = true;
+	}
+}
+
 void ProcessInput(Object**& objects, int& objectCount, Flags*& flags, Menu*& menu)
 {
 	int mouseX = mousex();
 	int mouseY = mousey();
 
+	CameraControls();
 
 	if (flags->oldMouseX != mouseX || flags->oldMouseY != mouseY)
 	{
@@ -106,10 +183,10 @@ void ProcessInput(Object**& objects, int& objectCount, Flags*& flags, Menu*& men
 
 
 			if (IsPressed('1') || random == 0) // create cube SPACE + 1
-				objects[objectCount++] = NewCube({ (float)(mouseX), (float)(mouseY), 0 }, { 100, 100, 100 }, { 0, 0, 0 }, { 255, 255, 255 });
+				objects[objectCount++] = NewCube({ (float)(mouseX-1920/2), (float)(mouseY-1080/2), -50 }, { 100, 100, 100 }, { 0, 0, 0 }, { 255, 255, 255 });
 
 			else if (IsPressed('2') || random == 1) // create icosahedron SPACE + 2
-				objects[objectCount++] = NewIcosahedron({ (float)(mouseX), (float)(mouseY), 0 }, { 50,  50,  50 }, { 0, 0, 0 }, { 255, 255, 255 });
+				objects[objectCount++] = NewIcosahedron({ (float)(mouseX-1920/2), (float)(mouseY-1080/2), 0 }, { 50,  50,  50 }, { 0, 0, 0 }, { 255, 255, 255 });
 
 
 
@@ -347,8 +424,8 @@ void getMouseInputPos(Object* object[], int n)
 		flags->updateWindow = 1;
 		if (selectedVertice != -1)
 		{
-			selectedObject->vertices[selectedVertice].x = (x - selectedObject->position.x) / selectedObject->scale.x;
-			selectedObject->vertices[selectedVertice].y = (y - selectedObject->position.y) / selectedObject->scale.y;
+			selectedObject->vertices[selectedVertice].x = (x - 1920/2 - 5 - selectedObject->position.x) / selectedObject->scale.x;
+			selectedObject->vertices[selectedVertice].y = (y - 1080/2 - 5 - selectedObject->position.y) / selectedObject->scale.y;
 			return;
 		}
 

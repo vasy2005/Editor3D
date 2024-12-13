@@ -59,6 +59,7 @@ int main()
 				DrawObject(objects[i]);
 
 			DrawMenu(menu); // draw over objects
+			DrawAxis();
 
 			setvisualpage(1 - buffer);
 			buffer = 1 - buffer;

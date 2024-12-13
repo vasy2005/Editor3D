@@ -16,6 +16,11 @@ struct Vector3
 	double x, y, z;
 };
 
+struct Vector4
+{
+	double x, y, z, w;
+};
+
 struct Color
 {
 	int r, g, b, a;
@@ -67,3 +72,15 @@ struct Flags
 	char cwd[512]; // folderul in care a fost deschisa aplicatia. cand dai open la un fiser se schimba folderul
 };
 Flags* flags = new Flags;
+
+struct Camera
+{
+	Vector3 position = { 0, 0, +10 };
+	Vector3 rotation = { 0, 0,   0 };
+
+	Vector3 forward = { 0, 0, -1 };
+	Vector3 up      = { 0, 1,  0 };
+	Vector3 right   = { 1, 0,  0 };
+};
+
+Camera camera;
