@@ -162,6 +162,76 @@ void DrawMenu(Menu* menu)
 	// buttons
 	for (int i = 0; i < menu->buttonCount; i++)
 		DrawButton(menu->buttons[i]);
-
 	DrawAxis();
+}
+
+void DrawPlane()
+{
+	// a quad is just a 2d rectangle/square drawn in 3d space
+	Object* quad = new Object;
+
+	quad->vertices = new Vector3[4]{ {-0.5, 0, +0.5},
+									 {+0.5, 0, +0.5},
+									 {-0.5, 0, -0.5},
+									 {+0.5, 0, -0.5} };
+	quad->vertexCount = 4;
+
+	quad->indices = new int* [2];
+	quad->indices[0] = new int[3] { 0, 2, 1 };
+	quad->indices[1] = new int[3] { 3, 1, 2 };
+
+	quad->indexCount = 2;
+
+	quad->realVertices = new Vector3[4];
+
+	quad->scale = { 100, 100, 100 };
+	quad->rotation = { 0, 0, 0 };
+	quad->color = { 255, 255, 255 };
+
+	int count = 10;
+
+	double center = count * 100 / 2;
+
+	for(int z = 0; z < count; z++)
+		for (int x = 0; x < count; x++)
+		{
+			quad->position = { (double)x * 100 - center, 0, -(double)z * 100 + center };
+
+			bool cull = false;
+
+			for (int i = 0; i < quad->vertexCount; i++)
+			{
+				quad->realVertices[i] = quad->vertices[i];
+
+				///// LOCAL COORD TO WORLD COORD /////////////////////////////////////
+				Rotate(quad->vertices[i], quad->rotation);
+				Rotate(quad->realVertices[i], quad->rotation);
+				Scale(quad->realVertices[i], quad->scale);
+				Translate(quad->realVertices[i], quad->position);
+				//////////////////////////////////////////////////////////
+
+				// WORLD COORD TO CAMEARA RELATIVE COORD
+				ViewMatrix(quad->realVertices[i]);
+				Perspective(quad->realVertices[i]);
+
+				if (quad->realVertices[i].z < -1200)
+				{
+					cull = true;
+					break;
+				}
+
+				Translate(quad->realVertices[i], { WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, 0 });
+			}
+
+			if (cull)
+				break;
+
+			setcolor(RGB(255, 255, 255));
+			DrawLine(quad->realVertices[0], quad->realVertices[1]);
+			DrawLine(quad->realVertices[1], quad->realVertices[3]);
+			DrawLine(quad->realVertices[3], quad->realVertices[2]);
+			DrawLine(quad->realVertices[2], quad->realVertices[0]);
+		}
+
+	delete quad;
 }

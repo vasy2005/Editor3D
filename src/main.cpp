@@ -61,6 +61,8 @@ int main()
 
 			cleardevice(); // clear previous frame
 
+			DrawPlane();
+
 			if (selectedObject != NULL)
 				drawHitBox(selectedObject);
 
