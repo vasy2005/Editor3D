@@ -1,14 +1,5 @@
 #pragma once
 
-#include <cmath>
-#include "structs.h"
-
-#include <iostream>
-
-using namespace std;
-
-
-
 void Translate(Vector3& vector, Vector3 offset)
 {
 	vector = { vector.x + offset.x, vector.y + offset.y, vector.z + offset.z };

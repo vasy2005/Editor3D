@@ -1,11 +1,5 @@
 #pragma once
 
-#include <graphics.h>
-#include <cstring>
-#include "structs.h"
-
-using namespace std;
-
 struct Button
 {
 	Vector2 center;
@@ -28,7 +22,7 @@ struct Menu
 	int buttonCount = sizeof(buttons) / sizeof(Button);
 };
 
-Menu* InitMenu(Flags* flags)
+Menu* NewMenu(Flags* flags)
 {
 	Menu* menu = new Menu;
 
@@ -36,9 +30,9 @@ Menu* InitMenu(Flags* flags)
 	menu->buttons[0].center = {1875, 35};
 	menu->buttons[0].width  = 50;
 	menu->buttons[0].height = 50;
-	char path[512]; strcpy(path, flags->cwd); strcat(path, "\\icons\\close.bmp");
+	char path[512]; strcpy(path, flags->workingDir); strcat(path, "\\icons\\close.bmp");
 	strcpy(menu->buttons[0].imagePath, path);
-	strcpy(path, flags->cwd); strcat(path, "\\icons\\closePressed.bmp");
+	strcpy(path, flags->workingDir); strcat(path, "\\icons\\closePressed.bmp");
 	strcpy(menu->buttons[0].pressedImagePath, path);
 
 	// new
@@ -117,6 +111,33 @@ void DrawButton(Button& button)
 	}
 }
 
+void DrawAxis()
+{
+	int posX = 120;
+	int posY = WINDOW_HEIGHT - 120;
+	int length = 60;
+
+	// back
+	setcolor(MENU_SHADOW_COLOR);
+	setlinestyle(SOLID_LINE, 0, 5);
+	setfillstyle(SOLID_FILL, MENU_BACK_COLOR);
+	circle(posX, posY, length * 1.2);
+	floodfill(posX, posY, MENU_SHADOW_COLOR);
+	setlinestyle(SOLID_LINE, 0, THICK_WIDTH);
+
+	// z axis
+	setcolor(RGB(0, 255, 0));
+	line(posX, posY, posX + camera.forward.x * length, posY - camera.forward.y * length);
+
+	// x axis
+	setcolor(RGB(255, 0, 0));
+	line(posX, posY, posX + camera.right.x * length, posY - camera.right.y * length);
+
+	// y axis
+	setcolor(RGB(0, 0, 255));
+	line(posX, posY, posX + camera.up.x * length, posY - camera.up.y * length);
+}
+
 void DrawMenu(Menu* menu)
 {
 	// background
@@ -135,4 +156,6 @@ void DrawMenu(Menu* menu)
 	// buttons
 	for (int i = 0; i < menu->buttonCount; i++)
 		DrawButton(menu->buttons[i]);
+
+	DrawAxis();
 }

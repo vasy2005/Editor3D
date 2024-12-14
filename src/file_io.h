@@ -1,17 +1,5 @@
 #pragma once
 
-#include <fstream>
-#include <cstring>
-#include <windows.h>
-#include "structs.h"
-#include "vector_math.h"
-
-#include <iostream>
-
-using namespace std;
-
-
-
 void SaveAsTri(char filePath[], Object**& objects, int& objectCount, Flags*& flags)
 {
 	ofstream fout(filePath);
@@ -94,7 +82,7 @@ void SaveAsObj(char filePath[], Object**& objects, int& objectCount, Flags*& fla
 			Vector3 vec = objects[i]->vertices[j];
 			Rotate(vec, objects[i]->rotation);
 			Scale(vec, objects[i]->scale);
-			Translate(vec, {objects[i]->position.x - windowWidth/2, objects[i]->position.y - windowHeight/2, objects[i]->position.z});
+			Translate(vec, {objects[i]->position.x - WINDOW_WIDTH/2, objects[i]->position.y - WINDOW_HEIGHT/2, objects[i]->position.z});
 			
 			obj << "v " << vec.x << ' ' << -vec.y << ' ' << vec.z << '\n';
 		}
@@ -226,6 +214,8 @@ void OpenTri(char filePath[], Object**& objects, int& objectCount, Flags*& flags
 		SkipFileLines(fin, 2);
 	}
 
+	flags->objectCapacity = objectCount; // fixed a bug
+
 	fin.close();
 }
 
@@ -283,6 +273,8 @@ void OpenObj(char filePath[], Object**& objects, int& objectCount, Flags*& flags
 				current->position = { geometric_center.x + 1920 / 2, geometric_center.y + 1080 / 2, geometric_center.z };
 				current->scale = { 200 / average_length, 200 / average_length, 200 / average_length };
 			}
+
+			geometric_center = { 0, 0, 0 }; // fixed a bug
 
 			if(objectCount > 0)
 				counter += objects[objectCount - 1]->vertexCount;
@@ -488,6 +480,8 @@ void Open(Object**& objects, int& objectCount, Flags*& flags)
 	if (error != 0) // success
 	{
 		// do something with the file path
+		ResetCamera();
+
 		if (strstr(filePath, ".tri"))
 			OpenTri(filePath, objects, objectCount, flags);
 

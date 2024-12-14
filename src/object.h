@@ -1,13 +1,14 @@
 #pragma once
 
-#include "constants.h"
-#include "structs.h"
-#include "vector_math.h"
-#include "globals.h"
+void ResetCamera()
+{
+	camera.position = { 0, 0, 0 };
+	camera.rotation = { 0, 0, 0 };
 
-using namespace std;
-
-
+	camera.forward = { 0, 0, -1 };
+	camera.up = { 0, 1,  0 };
+	camera.right = { 1, 0,  0 };
+}
 
 void NewScene(Object**& objects, int& objectCount, Flags*& flags)
 {
@@ -19,6 +20,8 @@ void NewScene(Object**& objects, int& objectCount, Flags*& flags)
 		delete[] objects;
 		objects = new Object * [16];
 		objectCount = 0;
+
+		ResetCamera();
 
 		flags->updateWindow = true;
 	}

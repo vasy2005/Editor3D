@@ -1,15 +1,5 @@
 #pragma once
 
-#include <graphics.h>
-#include "constants.h"
-#include "structs.h"
-#include "vector_math.h"
-#include "globals.h"
-
-using namespace std;
-
-
-
 void DrawLine(Vector3 first, Vector3 second)
 {
 	line(first.x, first.y, second.x, second.y);
@@ -121,7 +111,7 @@ void DrawObject(Object* object)
 		// ar trebuii resortat dupa o rotire a camerei cred
 
 		// artificially center objects
-		Translate(object->realVertices[i], {windowWidth/2, windowHeight/2, 0});
+		Translate(object->realVertices[i], {WINDOW_WIDTH/2, WINDOW_HEIGHT/2, 0});
 	}
 
 	for (int i = 0; i < object->indexCount; i++)
@@ -137,16 +127,4 @@ void drawHitBox(Object* object)
 
 	setcolor(WHITE);
 	rectangle(first.x, first.y, second.x, second.y);
-}
-
-void DrawAxis()
-{
-	setcolor(RGB(0, 255, 0));
-	line(1920/2, 1080/2, 1920/2 + camera.forward.x * 100, 1080/2 - camera.forward.y * 100);
-
-	setcolor(RGB(255, 0, 0));
-	line(1920 / 2, 1080 / 2, 1920 / 2 + camera.right.x * 100, 1080 / 2 - camera.right.y * 100);
-
-	setcolor(RGB(0, 0, 255));
-	line(1920 / 2, 1080 / 2, 1920 / 2 + camera.up.x * 100, 1080 / 2 - camera.up.y * 100);
 }

@@ -1,11 +1,5 @@
 #pragma once
 
-#include <windows.h>
-
-using namespace std;
-
-
-
 struct Vector2
 {
 	double x, y;
@@ -61,7 +55,7 @@ struct Flags
 
 	int oldMouseX = -1;
 	int oldMouseY = -1;
-	bool pressedSpace = false;
+	bool pressedCreate = false;
 	bool pressedLeftClick = false;
 
 	int selectedButton = -1;
@@ -69,9 +63,8 @@ struct Flags
 
 	bool showRedDot = 1;
 
-	char cwd[512]; // folderul in care a fost deschisa aplicatia. cand dai open la un fiser se schimba folderul
+	char workingDir[512]; // folderul in care a fost deschisa aplicatia. cand dai open la un fiser se schimba folderul
 };
-Flags* flags = new Flags;
 
 struct Camera
 {
@@ -81,6 +74,6 @@ struct Camera
 	Vector3 forward = { 0, 0, -1 };
 	Vector3 up      = { 0, 1,  0 };
 	Vector3 right   = { 1, 0,  0 };
-};
 
-Camera camera;
+	Vector3 direction = { 0, 0, -1 }; // true camera direction relative to the world origin
+};
