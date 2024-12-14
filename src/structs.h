@@ -64,6 +64,8 @@ struct Flags
 	bool showRedDot = 1;
 
 	char workingDir[512]; // folderul in care a fost deschisa aplicatia. cand dai open la un fiser se schimba folderul
+
+	bool xray = false;
 };
 
 struct Camera

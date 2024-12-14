@@ -270,7 +270,7 @@ void OpenObj(char filePath[], Object**& objects, int& objectCount, Flags*& flags
 				}
 
 				average_length /= current->vertexCount;
-				current->position = { geometric_center.x + 1920 / 2, geometric_center.y + 1080 / 2, geometric_center.z };
+				current->position = { geometric_center.x, geometric_center.y, geometric_center.z };
 				current->scale = { 200 / average_length, 200 / average_length, 200 / average_length };
 			}
 
@@ -295,6 +295,7 @@ void OpenObj(char filePath[], Object**& objects, int& objectCount, Flags*& flags
 			current->vertices = NULL;
 			current->indexCount  = 0;
 			current->indices  = NULL;
+			current->color = { 255, 255, 255 }; // fixed a bug
 
 			SkipFileLines(obj, 1);
 		}
@@ -383,7 +384,7 @@ void OpenObj(char filePath[], Object**& objects, int& objectCount, Flags*& flags
 		}
 
 		average_length /= current->vertexCount;
-		current->position = {geometric_center.x + 1920/2, geometric_center.y + 1080/2, geometric_center.z};
+		current->position = {geometric_center.x, geometric_center.y, geometric_center.z};
 		current->scale = { 200 / average_length, 200 / average_length, 200 / average_length };
 	}
 
@@ -481,6 +482,7 @@ void Open(Object**& objects, int& objectCount, Flags*& flags)
 	{
 		// do something with the file path
 		ResetCamera();
+		selectedObject = NULL;
 
 		if (strstr(filePath, ".tri"))
 			OpenTri(filePath, objects, objectCount, flags);

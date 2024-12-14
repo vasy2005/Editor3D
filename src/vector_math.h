@@ -123,7 +123,7 @@ void Perspective(Vector3& vector)
 	double B = -(2 * zFar * zNear) / (zFar - zNear);
 
 	double perspective_mat[4][4] = { { f/aspect, 0,  0, 0 },
-									 {    0,     f,  0, 0 },
+									 {    0,     f/aspect,  0, 0 },
 									 {    0,     0,  A, B },
 									 {    0,     0, -1, 0 } };
 

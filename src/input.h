@@ -90,47 +90,54 @@ void CheckButtonPress(Object**& objects, int& objectCount, Flags*& flags, Menu*&
 		{
 			switch (flags->selectedButton)
 			{
-			case 0: // close
-			{
-				int flag = MessageBox(flags->windowHandle, "Are you sure you want to exit?", "Warning!", MB_YESNO | MB_ICONEXCLAMATION);
+				case 0: // close
+					{
+						int flag = MessageBox(flags->windowHandle, "Are you sure you want to exit?", "Warning!", MB_YESNO | MB_ICONEXCLAMATION);
 
-				if (flag == IDYES)
-					flags->windowShouldClose = true;
-			}
-			break;
+						if (flag == IDYES)
+							flags->windowShouldClose = true;
+					}
+					break;
 
-			case 1: // new
-				NewScene(objects, objectCount, flags);
-				break;
+				case 1: // new
+					NewScene(objects, objectCount, flags);
+					break;
 
-			case 2: // save
-				Save(objects, objectCount, flags);
-				break;
+				case 2: // save
+					Save(objects, objectCount, flags);
+					break;
 
-			case 3: // open
-				Open(objects, objectCount, flags);
-				break;
+				case 3: // open
+					Open(objects, objectCount, flags);
+					break;
 
-			case 4:
-				CHOOSECOLOR dialogue = { 0 };
-				COLORREF result = WHITE;
-				COLORREF custom[16];
-
-				dialogue.lStructSize = sizeof(dialogue);
-				dialogue.Flags = CC_RGBINIT | CC_FULLOPEN | CC_ANYCOLOR;
-				dialogue.hwndOwner = flags->windowHandle;
-				dialogue.rgbResult = result;
-				dialogue.lpCustColors = custom;
-
-				int error = ChooseColor(&dialogue);
-
-				if (error != 0)
+				case 4:
 				{
-					if (selectedObject != NULL)
-						selectedObject->color = { GetRValue(dialogue.rgbResult), GetGValue(dialogue.rgbResult), GetBValue(dialogue.rgbResult) };
-					flags->updateWindow = true;
+					CHOOSECOLOR dialogue = { 0 };
+					COLORREF result = WHITE;
+					COLORREF custom[16];
+
+					dialogue.lStructSize = sizeof(dialogue);
+					dialogue.Flags = CC_RGBINIT | CC_FULLOPEN | CC_ANYCOLOR;
+					dialogue.hwndOwner = flags->windowHandle;
+					dialogue.rgbResult = result;
+					dialogue.lpCustColors = custom;
+
+					int error = ChooseColor(&dialogue);
+
+					if (error != 0)
+					{
+						if (selectedObject != NULL)
+							selectedObject->color = { GetRValue(dialogue.rgbResult), GetGValue(dialogue.rgbResult), GetBValue(dialogue.rgbResult) };
+						flags->updateWindow = true;
+					}
 				}
-				break;
+					break;
+
+				case 5:
+					flags->xray = !flags->xray;
+					flags->updateWindow = true;
+					break;
 			}
 
 			flags->selectedButton = -1;

@@ -18,7 +18,7 @@ struct Button
 
 struct Menu
 {
-	Button buttons[5];
+	Button buttons[6];
 	int buttonCount = sizeof(buttons) / sizeof(Button);
 };
 
@@ -58,6 +58,12 @@ Menu* NewMenu(Flags* flags)
 	menu->buttons[4].width = 150;
 	menu->buttons[4].height = 50;
 	strcpy(menu->buttons[4].text, "COLOR");
+
+	// x-ray
+	menu->buttons[5].center = { 1300, 35 };
+	menu->buttons[5].width = 150;
+	menu->buttons[5].height = 50;
+	strcpy(menu->buttons[5].text, "X-RAY");
 
 	return menu;
 }

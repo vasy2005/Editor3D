@@ -15,8 +15,12 @@ void DrawTriangle(int indice[3], Object* object)
 	Normalize(normal);
 
 	// backface culling. don't draw triangles the camera can't see. increases performance.
+
 	if (normal.z < 0) // TODO: works for now because camera faces negative z axis. will have to check which dir the camera is facing once it can move around.
-		return;
+		if (flags->xray == false)
+			return;
+		else
+			setlinestyle(4, 0, 3);
 
 
 	double average = 255 * (normal.x + normal.y + normal.z) / 3;
@@ -26,19 +30,39 @@ void DrawTriangle(int indice[3], Object* object)
 	int b = object->color.b - average; if (b < 0) b = 0; if (b > 255) b = 255;
 
 	int final_color = RGB(r, g, b);
-	setcolor(final_color);
 
-	DrawLine(*first, *second);
-	DrawLine(*second, *third);
-	DrawLine(*third, *first);
+	if (flags->xray == false)
+		setcolor(final_color);
+	else
+	{
+		if(normal.z < 0)
+			setcolor(RGB(127, 127, 127));
+		else
+			setcolor(RGB(255, 255, 255));
+	}
+
+	//DrawLine(*first,  *second);
+	//DrawLine(*second, *third);
+	//DrawLine(*third,  *first);
 
 
 	Vector3 center = { (first->x + second->x + third->x) / 3, (first->y + second->y + third->y) / 3, 0 }; // z might matter later?
 	//final_color += rand() % 100;
 	setfillstyle(SOLID_FILL, final_color);
 	
-	int aux[6] = {first->x, first->y, second->x, second->y, third->x, third->y};
-	fillpoly(3, aux);
+	if(flags->xray == false)
+	{
+		int aux[6] = { first->x, first->y, second->x, second->y, third->x, third->y };
+		fillpoly(3, aux);
+	}
+	else
+	{
+		DrawLine(*first,  *second);
+		DrawLine(*second, *third);
+		DrawLine(*third,  *first);
+	}
+
+	setlinestyle(SOLID_LINE, 0, THICK_WIDTH);
 
 	//Vertex select
 	setcolor(RED);
