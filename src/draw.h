@@ -35,7 +35,7 @@ void DrawTriangle(int indice[3], Object* object)
 		setcolor(final_color);
 	else
 	{
-		if(normal.z < 0)
+		if(normal.z < -EPS) //to account for errors
 			setcolor(RGB(127, 127, 127));
 		else
 			setcolor(RGB(255, 255, 255));
@@ -96,7 +96,8 @@ void DrawTriangle(int indice[3], Object* object)
 	}
 }
 
-void DrawObject(Object* object)
+
+void CalculateRealCoords(Object* object)
 {
 	object->hitBox[0] = { INF, INF };
 	object->hitBox[1] = { -1, -1 };
@@ -104,6 +105,11 @@ void DrawObject(Object* object)
 	//object->rotation.x = object->rotation.x - floor(object->rotation.x);
 	//object->rotation.y = object->rotation.y - floor(object->rotation.y);
 	//object->rotation.z = object->rotation.z - floor(object->rotation.z);
+
+	object->realPosition = object->position;
+	ViewMatrix(object->realPosition);
+	Perspective(object->realPosition);
+	Translate(object->realPosition, { WINDOW_WIDTH / 2.0, WINDOW_HEIGHT / 2.0, 0 });
 
 	//transform object
 	for (int i = 0; i < object->vertexCount; i++)
@@ -128,20 +134,17 @@ void DrawObject(Object* object)
 		if (object->realVertices[i].z < -1200)
 			return;
 
-		// TODO
-		// ar trebuii si o copie a centrului obiectelor trecut prin matrici
-		// si sa tinem vectorul de obiecte sortat crescator dupa valoarea finala a lui z
-		// intai trebuie desenate obiectele mai din spate dupa cele apropiate
-		// ar trebuii resortat dupa o rotire a camerei cred
-
 		// artificially center objects
-		Translate(object->realVertices[i], {WINDOW_WIDTH/2, WINDOW_HEIGHT/2, 0});
+		Translate(object->realVertices[i], { WINDOW_WIDTH / 2.0, WINDOW_HEIGHT / 2.0, 0 });
 	}
 
+	object->rotation = { 0, 0, 0 };
+}
+
+void DrawObject(Object* object)
+{
 	for (int i = 0; i < object->indexCount; i++)
 		DrawTriangle(object->indices[i], object);
-
-	object->rotation = { 0, 0, 0 };
 }
 
 void drawHitBox(Object* object)

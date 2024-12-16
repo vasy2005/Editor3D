@@ -41,7 +41,7 @@ int main()
 	Menu* menu = NewMenu(flags);
 
 	Object** objects = new Object*[flags->objectCapacity]; // init with capacity of 16, resize later
-	int objectCount = 0;
+	
 
 	int buffer = 0;
 
@@ -65,6 +65,11 @@ int main()
 
 			if (selectedObject != NULL)
 				drawHitBox(selectedObject);
+
+			for (int i = 0; i < objectCount; ++i)
+				CalculateRealCoords(objects[i]);
+
+			sortObjectsByZ(objects);
 
 			for (int i = 0; i < objectCount; ++i)
 				DrawObject(objects[i]);

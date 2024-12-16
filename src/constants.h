@@ -11,4 +11,4 @@
 #define PI  3.141592
 #define PHI 1.618033
 #define INF 1000000005
-#define EPS 0.01
+#define EPS 0.1

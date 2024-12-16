@@ -11,7 +11,7 @@ void CameraControls()
 	int mouseY = mousey();
 
 	///// ROTATION ///////////////////////////////////////////////////////////////////////////////////
-	if (IsPressed(VK_CONTROL) && IsPressed(VK_RBUTTON))
+	if (IsPressed(VK_RBUTTON) && !selectedObject)
 	{
 		double rotationSpeed = 1.0 / 1000;
 
@@ -252,7 +252,7 @@ void ProcessInput(Object**& objects, int& objectCount, Flags*& flags, Menu*& men
 		flags->pressedCreate = false;
 
 
-	if (flags->oldMouseX != mouseX || flags->oldMouseY != mouseY)
+	if (!verticeMoved && (flags->oldMouseX != mouseX || flags->oldMouseY != mouseY))
 	{
 		int prevSelected = selectedVertice;
 		selectedVertice = -1;
@@ -311,6 +311,7 @@ void getMouseInputRot(Object* object[], int n)
 	{
 		mouse = 0;
 		clearmouseclick(WM_RBUTTONUP);
+		selectedObject = 0;
 		return;
 	}
 
@@ -326,6 +327,7 @@ void getMouseInputRot(Object* object[], int n)
 				initx = x;
 				inity = y;
 				mouse = 1;
+				selectedObject = object[i];
 				break;
 			}
 		}
@@ -354,6 +356,7 @@ void getMouseInputScale(Object* object[], int n)
 		mouseS = 0;
 		clearmouseclick(WM_MBUTTONUP);
 		clearmouseclick(WM_MBUTTONDOWN);
+		selectedObject = 0;
 		return;
 	}
 
@@ -371,6 +374,7 @@ void getMouseInputScale(Object* object[], int n)
 				initxS = x;
 				inityS = y;
 				mouseS = 1;
+				selectedObject = object[i];
 				break;
 			}
 		}
@@ -394,6 +398,7 @@ void getMouseInputPos(Object* object[], int n)
 {
 	static int dx, dy;
 	static bool mouseP = 0;
+	static Object* selectedObjectMouse;
 
 	if (ismouseclick(WM_LBUTTONUP))
 	{
@@ -401,6 +406,9 @@ void getMouseInputPos(Object* object[], int n)
 		clearmouseclick(WM_LBUTTONUP);
 		clearmouseclick(WM_LBUTTONDOWN);
 		selectedVertice = -1;
+		selectedObjectMouse = NULL;
+		selectedObject = 0;
+		verticeMoved = 0;
 		return;
 	}
 
@@ -408,31 +416,50 @@ void getMouseInputPos(Object* object[], int n)
 	if (ismouseclick(WM_LBUTTONDOWN))
 	{
 		flags->updateWindow = 1;
-		if (selectedVertice != -1)
+		if (selectedVertice != -1 && !selectedObjectMouse)
 		{
-			selectedObject->vertices[selectedVertice].x = (x - 1920/2 - 5 - selectedObject->position.x) / selectedObject->scale.x;
-			selectedObject->vertices[selectedVertice].y = (y - 1080/2 - 5 - selectedObject->position.y) / selectedObject->scale.y;
+			verticeMoved = 1;
+			//calculul asta e un pic dubios dar deocamdata merge, cand ne apropiem de obiecte in timp ce miscam colturi apar probleme
+			double a = (x - selectedObject->realVertices[selectedVertice].x) / Distance(selectedObject->realPosition, camera.position) * 6;
+			double b = (y - selectedObject->realVertices[selectedVertice].y) / Distance(selectedObject->realPosition, camera.position) * 6;
+
+			if (abs(a) < EPS)
+				a = 0;
+			if (abs(b) < EPS)
+				b = 0;
+
+			selectedObject->vertices[selectedVertice].x += a;
+			selectedObject->vertices[selectedVertice].y += b;
 			return;
 		}
 
-		for (int i = 0; i < n; ++i)
-		{
-			Vector2 first = object[i]->hitBox[0];
-			Vector2 second = object[i]->hitBox[1];
-			if (x >= first.x && x <= second.x && y >= first.y && y <= second.y)
+		if (selectedObjectMouse == NULL && selectedVertice == -1)
+			for (int i = 0; i < n; ++i)
 			{
-				if (!mouseP)
-				{
-					mouseP = 1;
-					dx = x - object[i]->position.x;
-					dy = y - object[i]->position.y;
-				}
-				object[i]->position.x = x - dx;
-				object[i]->position.y = y - dy;
-				break;
-			}
-		}
+				Vector2 first = object[i]->hitBox[0];
+				Vector2 second = object[i]->hitBox[1];
+				if (x >= first.x)
+					if (x >= first.x && x <= second.x && y >= first.y && y <= second.y)
+					{
+						selectedObjectMouse = object[i];
+						selectedObject = object[i];
+					}
 
+
+			}
+
+	}
+
+	if (selectedObjectMouse && selectedVertice == -1 && verticeMoved == 0)
+	{
+		if (!mouseP)
+		{
+			mouseP = 1;
+			dx = x - selectedObjectMouse->position.x;
+			dy = y - selectedObjectMouse->position.y;
+		}
+		selectedObjectMouse->position.x = x - dx;
+		selectedObjectMouse->position.y = y - dy;
 	}
 
 	if (mouseP)

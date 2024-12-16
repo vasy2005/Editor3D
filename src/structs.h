@@ -36,6 +36,9 @@ struct Object
 	Vector3 scale;
 	Vector3 rotation;
 
+	Vector3 realPosition;
+
+
 	bool** ad; //matrice de adiacenta a grafului
 
 	Color color;

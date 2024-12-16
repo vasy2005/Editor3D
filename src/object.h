@@ -150,6 +150,16 @@ void RandomizeObjectProperties(Object* object)
 }
 
 
+void sortObjectsByZ(Object**& objects)
+{
+	int i, j;
+
+	for (i = 0; i < objectCount; ++i)
+		for (j = i + 1; j < objectCount; ++j)
+			if (objects[i]->realPosition.z < objects[j]->realPosition.z)
+				swap(objects[i], objects[j]);
+}
+
 
 Object* NewCube(Vector3 position, Vector3 scale, Vector3 rotation, Color color)
 {
