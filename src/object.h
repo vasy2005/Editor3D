@@ -372,6 +372,8 @@ void HighlightObject()
 			Vector3 normal2 = SurfaceNormal(object->vertices[object->indices[pos[0]][0]], object->vertices[object->indices[pos[0]][1]], object->vertices[object->indices[pos[0]][2]]);
 			Normalize(normal2);
 
+			//daca normal1 = normal2 atunci cele 2 triunghiuri apartin aceleiasi fete (teoretic? idk merge)
+
 			if (abs(normal1.x-normal2.x) < EPS && abs(normal1.y - normal2.y) < EPS && abs(normal1.z - normal2.z) < EPS)
 				break;
 		}
