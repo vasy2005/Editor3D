@@ -13,7 +13,7 @@
 #define INF 1000000005
 #define EPS 0.1
 
-#define VERTEXMAX 50
-#define INDICEMAX 300
+#define VERTEXMAX 30
+#define INDICEMAX 100
 
 #define INF 1e9

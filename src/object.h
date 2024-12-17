@@ -492,6 +492,21 @@ void createVertex()
 	flags->updateWindow = 1;
 }
 
+void deleteObject()
+{
+	int i;
+	for (i = 0; i < objectCount; ++i)
+		if (objects[i] == addVerticeObject)
+			break;
+
+	delete objects[i];
+	for (; i < objectCount - 1; ++i)
+		objects[i] = objects[i + 1];
+
+	objectCount --;
+	flags->updateWindow = 1;
+}
+
 /*
 double r = 2;
 Object* NewNObject(int n, Vector3 position, Vector3 scale, Vector3 rotation, Color color)

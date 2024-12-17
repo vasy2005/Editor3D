@@ -204,12 +204,16 @@ void ProcessInput(Object**& objects, int& objectCount, Flags*& flags, Menu*& men
 
 
 	//create new vertex at highlighted indice
-	if (addVerticeObject != NULL && IsPressed(VK_CONTROL) && IsPressed('P'))
+	if (addVerticeObject && IsPressed(VK_CONTROL) && IsPressed('P'))
 	{
 		createVertex();
 		addVerticeObject = 0;
 		selectedObject = 0;
 	}
+
+	//delete Object
+	if (addVerticeObject && IsPressed(VK_CONTROL) && IsPressed('M'))
+		deleteObject();
 
 	// create new objects with keyboard shortcuts
 	if (IsPressed('C'))
