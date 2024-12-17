@@ -184,18 +184,25 @@ void DrawPlane()
 
 	quad->realVertices = new Vector3[4];
 
-	quad->scale = { 100, 100, 100 };
+	double dist = 100;
+	//dist *= dist / (up.y / 20);
+
+	quad->scale = { dist, dist, dist };
 	quad->rotation = { 0, 0, 0 };
 	quad->color = { 255, 255, 255 };
 
-	int count = 10;
+	/*1 .. count*dist/2
+	x .. camera.position.x*/
+	double count = 30;
 
-	double center = count * 100 / 2;
+	double center = count * dist / 2;
+
+	static int aux = 0;
 
 	for(int z = 0; z < count; z++)
 		for (int x = 0; x < count; x++)
 		{
-			quad->position = { (double)x * 100 - center, 0, -(double)z * 100 + center };
+			quad->position = { ((double)(x) * dist  - center), 0, -(double)z * dist + center};
 
 			bool cull = false;
 
@@ -212,9 +219,10 @@ void DrawPlane()
 
 				// WORLD COORD TO CAMEARA RELATIVE COORD
 				ViewMatrix(quad->realVertices[i]);
+
 				Perspective(quad->realVertices[i]);
 
-				if (quad->realVertices[i].z < -1200)
+				if (quad->realVertices[i].z < -1100)
 				{
 					cull = true;
 					break;
@@ -224,9 +232,9 @@ void DrawPlane()
 			}
 
 			if (cull)
-				break;
+				continue;
 
-			setcolor(RGB(255, 255, 255));
+			setcolor(RGB(127, 127, 127));
 			DrawLine(quad->realVertices[0], quad->realVertices[1]);
 			DrawLine(quad->realVertices[1], quad->realVertices[3]);
 			DrawLine(quad->realVertices[3], quad->realVertices[2]);

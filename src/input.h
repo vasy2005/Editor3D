@@ -203,6 +203,14 @@ void ProcessInput(Object**& objects, int& objectCount, Flags*& flags, Menu*& men
 		Open(objects, objectCount, flags);
 
 
+	//create new vertex at highlighted indice
+	if (addVerticeObject != NULL && IsPressed(VK_CONTROL) && IsPressed('P'))
+	{
+		createVertex();
+		addVerticeObject = 0;
+		selectedObject = 0;
+	}
+
 	// create new objects with keyboard shortcuts
 	if (IsPressed('C'))
 	{
@@ -328,6 +336,7 @@ void getMouseInputRot(Object* object[], int n)
 				inity = y;
 				mouse = 1;
 				selectedObject = object[i];
+				addVerticeObject = object[i];
 				break;
 			}
 		}
@@ -375,6 +384,7 @@ void getMouseInputScale(Object* object[], int n)
 				inityS = y;
 				mouseS = 1;
 				selectedObject = object[i];
+				addVerticeObject = object[i];
 				break;
 			}
 		}
@@ -443,6 +453,7 @@ void getMouseInputPos(Object* object[], int n)
 					{
 						selectedObjectMouse = object[i];
 						selectedObject = object[i];
+						addVerticeObject = object[i];
 					}
 
 

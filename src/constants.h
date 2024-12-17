@@ -12,3 +12,8 @@
 #define PHI 1.618033
 #define INF 1000000005
 #define EPS 0.1
+
+#define VERTEXMAX 50
+#define INDICEMAX 300
+
+#define INF 1e9

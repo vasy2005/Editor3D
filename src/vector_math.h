@@ -38,9 +38,18 @@ void Transform(double transform_mat[4][4], Vector4& vector)
 	vector = { result_mat[0][0], result_mat[1][0], result_mat[2][0], result_mat[3][0] };
 }
 
-void Rotate(Vector3& vector, Vector3 rotation)
+void Rotate(Vector3& vector, Vector3& rotation)
 {
 	double rcos, rsin;
+
+
+	/*while (abs(rotation.x) > PI / 2)
+		rotation.x = 0;
+	while (abs(rotation.y) > PI / 2)
+		rotation.y = 0;
+	while (abs(rotation.z) > PI / 2)
+		rotation.z = 0;*/
+
 
 	rcos = cos(rotation.x);
 	rsin = sin(rotation.x);
@@ -59,6 +68,7 @@ void Rotate(Vector3& vector, Vector3 rotation)
 	double rotateZ[3][3] = { { rcos, -rsin, 0 },
 							 { rsin,  rcos, 0 },
 							 {  0,      0,  1 } };
+	
 
 	Transform(rotateX, vector);
 	Transform(rotateY, vector);
@@ -151,4 +161,49 @@ void ViewMatrix(Vector3& vector)
 	Vector4 vec = { vector.x, vector.y, vector.z, 1 };
 	Transform(view_matrix, vec);
 	vector = { vec.x, vec.y, vec.z };
+}
+
+bool isInScreen(Vector3& point)
+{
+	if (point.x >= 0 && point.x <= WINDOW_WIDTH && point.y >= 0 && point.y <= WINDOW_HEIGHT)
+		return 1;
+	return 0;
+}
+int inScreen(Vector3 &point, double m, double n)
+{
+	//y = mx + n - line equation
+	if (isInScreen(point))
+		return 1;
+
+	point.x = 0;
+	point.y = n;
+
+	if (isInScreen(point))
+		return 1;
+
+	point.x = WINDOW_WIDTH;
+	point.y = m * point.x + n;
+
+	if (isInScreen(point))
+		return 1;
+
+	if (abs(m) > EPS)
+	{
+		point.y = 0;
+		point.x = (-n) / m;
+
+		if (isInScreen(point))
+			return 1;
+	}
+
+	if (abs(m) > EPS)
+	{
+		point.y = WINDOW_HEIGHT;
+		point.x = (point.y - n) / m;
+
+		if (isInScreen(point))
+			return 1;
+	}
+
+	return 0;
 }

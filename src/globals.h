@@ -9,3 +9,10 @@ Flags* flags = new Flags;
 Camera camera;
 
 int objectCount = 0;
+Object* addVerticeObject = 0;
+
+int pos[INDICEMAX]; //pos of triangles facing the camera
+int posLen = 0;
+bool highlighted[INDICEMAX];
+
+//up, down, left, right

@@ -2,11 +2,22 @@
 
 void DrawLine(Vector3 first, Vector3 second)
 {
+	//double m = (second.y - first.y) / (second.x - first.x); // slope
+	//double n = (first.y - m * first.x);
+	//if (!inScreen(first, m, n) && !inScreen(second, m, n)) return;
+
 	line(first.x, first.y, second.x, second.y);
 }
 
-void DrawTriangle(int indice[3], Object* object)
+
+
+void DrawTriangle(int pos, Object* object)
 {
+	int indice[3]; 
+	
+	indice[0] = object->indices[pos][0];
+	indice[1] = object->indices[pos][1];
+	indice[2] = object->indices[pos][2];
 	Vector3* first = &object->realVertices[indice[0]];
 	Vector3* second = &object->realVertices[indice[1]];
 	Vector3* third = &object->realVertices[indice[2]];
@@ -16,7 +27,7 @@ void DrawTriangle(int indice[3], Object* object)
 
 	// backface culling. don't draw triangles the camera can't see. increases performance.
 
-	if (normal.z < 0) // TODO: works for now because camera faces negative z axis. will have to check which dir the camera is facing once it can move around.
+	if (normal.z < -EPS) // TODO: works for now because camera faces negative z axis. will have to check which dir the camera is facing once it can move around.
 		if (flags->xray == false)
 			return;
 		else
@@ -30,6 +41,10 @@ void DrawTriangle(int indice[3], Object* object)
 	int b = object->color.b - average; if (b < 0) b = 0; if (b > 255) b = 255;
 
 	int final_color = RGB(r, g, b);
+	
+
+	if (object == addVerticeObject && highlighted[pos])
+		final_color = YELLOW;
 
 	if (flags->xray == false)
 		setcolor(final_color);
@@ -107,6 +122,9 @@ void CalculateRealCoords(Object* object)
 	//object->rotation.z = object->rotation.z - floor(object->rotation.z);
 
 	object->realPosition = object->position;
+	object->scale.x = max(object->scale.x, 10);
+	object->scale.y = max(object->scale.y, 10);
+	object->scale.z = max(object->scale.z, 10);
 	ViewMatrix(object->realPosition);
 	Perspective(object->realPosition);
 	Translate(object->realPosition, { WINDOW_WIDTH / 2.0, WINDOW_HEIGHT / 2.0, 0 });
@@ -141,10 +159,18 @@ void CalculateRealCoords(Object* object)
 	object->rotation = { 0, 0, 0 };
 }
 
+
+
 void DrawObject(Object* object)
 {
+	//find indice facing the camera
+	
+
+	for (int i = 0; i < posLen; ++i)
+		highlighted[pos[i]] = 1;
+
 	for (int i = 0; i < object->indexCount; i++)
-		DrawTriangle(object->indices[i], object);
+		DrawTriangle(i, object);
 }
 
 void drawHitBox(Object* object)

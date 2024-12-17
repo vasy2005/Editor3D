@@ -38,11 +38,13 @@ struct Object
 
 	Vector3 realPosition;
 
+	
 
 	bool** ad; //matrice de adiacenta a grafului
 
 	Color color;
 };
+Object** objects;
 
 
 

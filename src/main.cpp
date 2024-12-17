@@ -40,7 +40,7 @@ int main()
 	NewWindow(flags);
 	Menu* menu = NewMenu(flags);
 
-	Object** objects = new Object*[flags->objectCapacity]; // init with capacity of 16, resize later
+	objects = new Object*[flags->objectCapacity]; // init with capacity of 16, resize later
 	
 
 	int buffer = 0;
@@ -61,6 +61,7 @@ int main()
 
 			cleardevice(); // clear previous frame
 
+			//CalculatePlane();
 			DrawPlane();
 
 			if (selectedObject != NULL)
@@ -69,7 +70,9 @@ int main()
 			for (int i = 0; i < objectCount; ++i)
 				CalculateRealCoords(objects[i]);
 
+			HighlightObject();
 			sortObjectsByZ(objects);
+
 
 			for (int i = 0; i < objectCount; ++i)
 				DrawObject(objects[i]);
@@ -80,6 +83,8 @@ int main()
 			buffer = 1 - buffer;
 
 			flags->updateWindow = false;
+
+			cout << "drawing\n";
 		}
 		///////////////////////////////////////////////////////
 
