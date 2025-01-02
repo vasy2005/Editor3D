@@ -14,6 +14,7 @@ using namespace std;
 #include "globals.h"
 #include "vector_math.h"
 #include "object.h"
+#include "texture.h"
 #include "draw.h"
 #include "file_io.h"
 #include "menu.h"
@@ -41,7 +42,8 @@ int main()
 	Menu* menu = NewMenu(flags);
 
 	objects = new Object*[flags->objectCapacity]; // init with capacity of 16, resize later
-	
+
+	canvas       = new char[24 + 4 * WINDOW_WIDTH * WINDOW_HEIGHT];
 
 	int buffer = 0;
 
@@ -50,8 +52,11 @@ int main()
 		ProcessInput(objects, objectCount, flags, menu); // handle mouse and keyboard events
 		getMouseInputRot(objects, objectCount);
 		getMouseInputScale(objects, objectCount);
-		getMouseInputPos(objects, objectCount);
+		// getMouseInputPos(objects, objectCount); // se deselecteaza obiectul si cand dai clic pe meniu
 		checkKeyPressed();
+
+		// ascunde butoanele texture si color
+		menu->buttons[4].disabled = menu->buttons[6].disabled = (selectedObject == NULL);
 
 		///// DRAW HERE ///////////////////////////////////////
 		if (flags->updateWindow == true) // only redraw screen if there are changes
@@ -60,6 +65,7 @@ int main()
 			setactivepage(1 - buffer);
 
 			cleardevice(); // clear previous frame
+			ClearFrame();
 
 			//CalculatePlane();
 			DrawPlane();
@@ -79,18 +85,25 @@ int main()
 
 			DrawMenu(menu); // draw over objects
 
+			//if (selectedObject != NULL && selectedObject->texture != NULL)
+			//{
+			//	putimage(0, 0, selectedObject->texture, COPY_PUT);
+			//	cout << selectedObject->textureW << ' ' << selectedObject->textureH << '\n';
+			//}
+
 			setvisualpage(1 - buffer);
 			buffer = 1 - buffer;
 
 			flags->updateWindow = false;
 
-			cout << "drawing\n";
+			// cout << "drawing\n";
 		}
 		///////////////////////////////////////////////////////
 
 		 delay(16); // cap framerate at 60fps
 	}
 
+	delete[] canvas;
 	delete[] objects;
 	delete menu;
 	delete flags;

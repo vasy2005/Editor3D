@@ -174,37 +174,38 @@ Object* NewCube(Vector3 position, Vector3 scale, Vector3 rotation, Color color)
 
 	object->vertexCount = 8;
 	object->vertices = new Vector3[VERTEXMAX]{ {-0.5f, -0.5f, +0.5f},
-									   {-0.5f, +0.5f, +0.5f},
-									   {+0.5f, +0.5f, +0.5f},
-									   {+0.5f, -0.5f, +0.5f},
+											   {-0.5f, +0.5f, +0.5f},
+											   {+0.5f, +0.5f, +0.5f},
+											   {+0.5f, -0.5f, +0.5f},
+											   
+											   {-0.5f, -0.5f, -0.5f},
+											   {-0.5f, +0.5f, -0.5f},
+											   {+0.5f, +0.5f, -0.5f},
+											   {+0.5f, -0.5f, -0.5f} };
 
-									   {-0.5f, -0.5f, -0.5f},
-									   {-0.5f, +0.5f, -0.5f},
-									   {+0.5f, +0.5f, -0.5f},
-									   {+0.5f, -0.5f, -0.5f} };
 	object->realVertices = new Vector3[VERTEXMAX];
 	memcpy(object->realVertices, object->vertices, sizeof(Vector3) * object->vertexCount);
 
 	object->indexCount = 12;
 	const int cnt = object->indexCount;
-	int aux[12][3] = { {0, 4, 7},
-		               {0, 7, 3},
-		               
-		               {2, 1, 0},
-		               {3, 2, 0},
-		               
-		               {0, 1, 5},
-		               {0, 5, 4},
-		               
-		               {4, 5, 6},
-		               {4, 6, 7},
-		               
-		               {6, 2, 3},
-		               {7, 6, 3},
-		               
-		               {6, 5, 1},
-		               {2, 6, 1}
-	};
+	int aux[12][3] = { {0, 2, 1}, // front
+					   {0, 3, 2},
+					   
+					   {4, 5, 6}, // back
+					   {4, 6, 7},
+					   
+					   {3, 6, 2}, // right
+					   {3, 7, 6},
+					   
+					   {0, 1, 5}, // left
+					   {0, 5, 4},
+					   
+					   {1, 6, 5}, // top
+					   {1, 2, 6},
+					   
+					   {0, 4, 7}, // bottom
+					   {0, 7, 3} };
+
 	object->indices = new int* [INDICEMAX]; //create indices
 	object->ad = new bool* [VERTEXMAX]; //create graph
 	for (int i = 0; i < cnt; ++i)
@@ -231,6 +232,24 @@ Object* NewCube(Vector3 position, Vector3 scale, Vector3 rotation, Color color)
 		object->ad[a][c] = object->ad[c][a] = 1;
 		object->ad[b][c] = object->ad[c][b] = 1;
 	}
+
+	object->uv = new UV[12] { { {0.25, 0.33}, {0.00, 0.33}, {0.00, 0.66} },
+				              { {0.25, 0.66}, {0.25, 0.33}, {0.00, 0.66} },
+				              
+				              { {0.50, 0.33}, {0.75, 0.33}, {0.50, 0.66} },
+				              { {0.75, 0.33}, {0.75, 0.66}, {0.50, 0.66} },
+				              
+				              { {0.50, 0.33}, {0.25, 0.33}, {0.25, 0.66} },
+				              { {0.50, 0.66}, {0.50, 0.33}, {0.25, 0.66} },
+				              
+				              { {0.75, 0.33}, {1.00, 0.33}, {0.75, 0.66} },
+				              { {1.00, 0.33}, {1.00, 0.66}, {0.75, 0.66} },
+				              
+				              { {0.50, 0.00}, {0.25, 0.00}, {0.25, 0.33} },
+				              { {0.50, 0.33}, {0.50, 0.00}, {0.25, 0.33} },
+				              
+				              { {0.25, 0.66}, {0.50, 0.66}, {0.25, 1.00} },
+				              { {0.50, 0.66}, {0.50, 1.00}, {0.25, 1.00} } };
 
 	object->position = position;
 	object->scale = scale;

@@ -91,13 +91,13 @@ void CheckButtonPress(Object**& objects, int& objectCount, Flags*& flags, Menu*&
 			switch (flags->selectedButton)
 			{
 				case 0: // close
-					{
-						int flag = MessageBox(flags->windowHandle, "Are you sure you want to exit?", "Warning!", MB_YESNO | MB_ICONEXCLAMATION);
+				{
+					int flag = MessageBox(flags->windowHandle, "Are you sure you want to exit?", "Warning!", MB_YESNO | MB_ICONEXCLAMATION);
 
-						if (flag == IDYES)
-							flags->windowShouldClose = true;
-					}
-					break;
+					if (flag == IDYES)
+						flags->windowShouldClose = true;
+				}
+				break;
 
 				case 1: // new
 					NewScene(objects, objectCount, flags);
@@ -111,8 +111,11 @@ void CheckButtonPress(Object**& objects, int& objectCount, Flags*& flags, Menu*&
 					Open(objects, objectCount, flags);
 					break;
 
-				case 4:
+				case 4: // color
 				{
+					if (menu->buttons[4].disabled == true)
+						break;
+
 					CHOOSECOLOR dialogue = { 0 };
 					COLORREF result = WHITE;
 					COLORREF custom[16];
@@ -134,8 +137,16 @@ void CheckButtonPress(Object**& objects, int& objectCount, Flags*& flags, Menu*&
 				}
 					break;
 
-				case 5:
+				case 5: // xray
 					flags->xray = !flags->xray;
+					flags->updateWindow = true;
+					break;
+
+				case 6: // texture
+					if (menu->buttons[6].disabled == true)
+						break;
+
+					OpenTexture(selectedObject->texture, selectedObject->textureW, selectedObject->textureH);
 					flags->updateWindow = true;
 					break;
 			}

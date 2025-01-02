@@ -22,6 +22,10 @@ void DrawTriangle(int pos, Object* object)
 	Vector3* second = &object->realVertices[indice[1]];
 	Vector3* third = &object->realVertices[indice[2]];
 
+	Vector2 uv1 = object->uv[pos].f;
+	Vector2 uv2 = object->uv[pos].s;
+	Vector2 uv3 = object->uv[pos].t;
+
 	Vector3 normal = SurfaceNormal(*first, *second, *third);
 	Normalize(normal);
 
@@ -67,14 +71,19 @@ void DrawTriangle(int pos, Object* object)
 	
 	if(flags->xray == false)
 	{
-		int aux[6] = { first->x, first->y, second->x, second->y, third->x, third->y };
-		fillpoly(3, aux);
+		if (object->texture != NULL)
+			DrawTexturedTriangle(*first, *second, *third, uv1, uv2, uv3, object->texture, object->textureW, object->textureH);
+		else
+		{
+			int aux[6] = { first->x, first->y, second->x, second->y, third->x, third->y };
+			fillpoly(3, aux);
+		}
 	}
 	else
 	{
-		DrawLine(*first,  *second);
+		DrawLine(*first, *second);
 		DrawLine(*second, *third);
-		DrawLine(*third,  *first);
+		DrawLine(*third, *first);
 	}
 
 	setlinestyle(SOLID_LINE, 0, THICK_WIDTH);
@@ -169,8 +178,14 @@ void DrawObject(Object* object)
 	for (int i = 0; i < posLen; ++i)
 		highlighted[pos[i]] = 1;
 
+	if(object->texture != NULL)
+		Screenshot();
+
 	for (int i = 0; i < object->indexCount; i++)
 		DrawTriangle(i, object);
+	
+	if (object->texture != NULL)
+		DrawFrame();
 }
 
 void drawHitBox(Object* object)

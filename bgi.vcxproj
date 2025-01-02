@@ -106,6 +106,7 @@
     <ClInclude Include="src\menu.h" />
     <ClInclude Include="src\object.h" />
     <ClInclude Include="src\structs.h" />
+    <ClInclude Include="src\texture.h" />
     <ClInclude Include="src\vector_math.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

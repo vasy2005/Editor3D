@@ -15,4 +15,5 @@ int pos[INDICEMAX]; //pos of triangles facing the camera
 int posLen = 0;
 bool highlighted[INDICEMAX];
 
+char* canvas;
 //up, down, left, right

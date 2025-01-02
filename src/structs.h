@@ -20,10 +20,17 @@ struct Color
 	int r, g, b, a;
 };
 
+struct UV
+{
+	Vector2 f, s, t;
+};
+
 struct Object
 {
 	Vector3* vertices;
 	int** indices; // triangles
+
+	UV* uv;
 
 	Vector3* realVertices;
 
@@ -43,6 +50,10 @@ struct Object
 	bool** ad; //matrice de adiacenta a grafului
 
 	Color color;
+
+	char* texture = NULL;
+	int textureW;
+	int textureH;
 };
 Object** objects;
 

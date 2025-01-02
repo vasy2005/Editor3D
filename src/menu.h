@@ -13,12 +13,13 @@ struct Button
 	int backColor   = RGB(47, 99, 185);
 	int shadowColor = RGB(23, 46, 164);
 
-	bool pressed = false;
+	bool pressed  = false;
+	bool disabled = false;
 };
 
 struct Menu
 {
-	Button buttons[6];
+	Button buttons[7];
 	int buttonCount = sizeof(buttons) / sizeof(Button);
 };
 
@@ -58,12 +59,20 @@ Menu* NewMenu(Flags* flags)
 	menu->buttons[4].width = 150;
 	menu->buttons[4].height = 50;
 	strcpy(menu->buttons[4].text, "COLOR");
+	menu->buttons[4].disabled = true;
 
 	// x-ray
 	menu->buttons[5].center = { 1300, 35 };
 	menu->buttons[5].width = 150;
 	menu->buttons[5].height = 50;
 	strcpy(menu->buttons[5].text, "X-RAY");
+
+	// texture
+	menu->buttons[6].center = { 1550, 35 };
+	menu->buttons[6].width = 150;
+	menu->buttons[6].height = 50;
+	strcpy(menu->buttons[6].text, "TEXTURE");
+	menu->buttons[6].disabled = true;
 
 	return menu;
 }
@@ -161,7 +170,8 @@ void DrawMenu(Menu* menu)
 
 	// buttons
 	for (int i = 0; i < menu->buttonCount; i++)
-		DrawButton(menu->buttons[i]);
+		if(menu->buttons[i].disabled == false)
+			DrawButton(menu->buttons[i]);
 	DrawAxis();
 }
 
@@ -193,7 +203,7 @@ void DrawPlane()
 
 	/*1 .. count*dist/2
 	x .. camera.position.x*/
-	double count = 30;
+	double count = 5;
 
 	double center = count * dist / 2;
 
