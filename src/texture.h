@@ -96,14 +96,26 @@ void FastSetPixel(int x, int y, int color)
 	canvas[24 + 4 * (y * WINDOW_WIDTH + x) + 3] = 0;                // alpha
 }
 
-int FastGetPixel(int x, int y, char* bitmap, int width, int height)
+int FastGetPixel(int x, int y, char* bitmap, int width, int height, float shadow, int tint)
 {
 	if (x < 0 || x >= width || y < 0 || y >= height)
 		return RGB(0, 0, 0);
 
-	int b = bitmap[24 + 4 * (y * width + x) + 0];
-	int g = bitmap[24 + 4 * (y * width + x) + 1];
-	int r = bitmap[24 + 4 * (y * width + x) + 2];
+	int b = (unsigned char)bitmap[24 + 4 * (y * width + x) + 0];
+	int g = (unsigned char)bitmap[24 + 4 * (y * width + x) + 1];
+	int r = (unsigned char)bitmap[24 + 4 * (y * width + x) + 2];
+
+	r = r - shadow/3;
+	g = g - shadow/3;
+	b = b - shadow/3;
+
+	r = (r * 0.9 + GetRValue(tint) * 0.1);
+	g = (g * 0.9 + GetGValue(tint) * 0.1);
+	b = (b * 0.9 + GetBValue(tint) * 0.1);
+
+	if (r < 0) r = 0; if (r > 255) r = 255;
+	if (g < 0) g = 0; if (g > 255) g = 255;
+	if (b < 0) b = 0; if (b > 255) b = 255;
 
 	return RGB(r, g, b);
 }
@@ -113,7 +125,7 @@ float Baryocentric(Vector3 first, Vector3 second, Vector3 point)
 	return (second.x - first.x) * (point.y - first.y) - (second.y - first.y) * (point.x - first.x);
 }
 
-void DrawTexturedTriangle(Vector3 third, Vector3 second, Vector3 first, Vector2 uv3, Vector2 uv2, Vector2 uv1, char* texture, int textureWidth, int textureHeight)
+void DrawTexturedTriangle(Vector3 third, Vector3 second, Vector3 first, Vector2 uv3, Vector2 uv2, Vector2 uv1, char* texture, int textureWidth, int textureHeight, float shadow, int tint)
 {
 	float minX = min(first.x, min(second.x, third.x));
 	float minY = min(first.y, min(second.y, third.y));
@@ -141,7 +153,7 @@ void DrawTexturedTriangle(Vector3 third, Vector3 second, Vector3 first, Vector2 
 			posX = posX * (textureWidth  - 1);
 			posY = textureHeight - 1 - posY * (textureHeight - 1); // scaderea e ca sa intorc textura cu susu in jos ca sa fie desenata corect
 
-			int color = FastGetPixel(posX, posY, texture, textureWidth, textureHeight);
+			int color = FastGetPixel(posX, posY, texture, textureWidth, textureHeight, shadow, tint);
 
 			FastSetPixel(x, y, color);
 		}

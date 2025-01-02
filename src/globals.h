@@ -17,3 +17,5 @@ bool highlighted[INDICEMAX];
 
 char* canvas;
 //up, down, left, right
+
+Object* copiedObject = NULL;

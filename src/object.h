@@ -29,6 +29,117 @@ void NewScene(Object**& objects, int& objectCount, Flags*& flags)
 	selectedObject = NULL;
 }
 
+void DeleteObject(Object*& object, Object**& objects, int& objectCount)
+{
+	if (object == NULL)
+	{
+		MessageBox(flags->windowHandle, "No object selected for deletion.", "Warning!", MB_OK | MB_ICONWARNING);
+		return;
+	}
+
+	int pos = -1;
+
+	for (int i = 0; i < objectCount; i++)
+	{
+		if (objects[i] == object)
+		{
+			delete objects[i];
+			pos = i;
+		}
+
+		if (pos != -1 && i + 1 < objectCount)
+			objects[i] = objects[i + 1];
+	}
+
+	objectCount--;
+
+	selectedObject = NULL;
+	flags->updateWindow = true;
+}
+
+void CopyObject(Object* object)
+{
+	if(object == NULL)
+	{
+		MessageBox(flags->windowHandle, "No object selected for copying.", "Warning!", MB_OK | MB_ICONWARNING);
+		return;
+	}
+
+	if(copiedObject == NULL)
+		flags->updateWindow = true; // ca sa apara paste prima data
+	copiedObject = object;
+}
+
+void PasteObject(Object* object)
+{
+	if (object == NULL)
+	{
+		MessageBox(flags->windowHandle, "There is no object copied in the clipboard.", "Warning!", MB_OK | MB_ICONWARNING);
+		return;
+	}
+
+	if (objectCount + 1 > flags->objectCapacity) // resize objects if too many are added
+	{
+		flags->objectCapacity *= 2;
+		Object** temp = new Object * [flags->objectCapacity];
+		memcpy(temp, objects, sizeof(Object*) * objectCount);
+		delete[] objects;
+		objects = temp;
+	}
+
+	objectCount++;
+
+	Object* newObj = objects[objectCount - 1] = new Object;
+
+	newObj->vertices = new Vector3[copiedObject->vertexCount];
+	memcpy(newObj->vertices, copiedObject->vertices, sizeof(Vector3) * copiedObject->vertexCount);
+
+	newObj->indices = new int* [copiedObject->indexCount];
+	for (int i = 0; i < copiedObject->indexCount; i++)
+	{
+		newObj->indices[i] = new int[3];
+
+		newObj->indices[i][0] = copiedObject->indices[i][0];
+		newObj->indices[i][1] = copiedObject->indices[i][1];
+		newObj->indices[i][2] = copiedObject->indices[i][2];
+	}
+
+	newObj->uv = copiedObject->uv; // not a good idea but it works
+
+	newObj->realVertices = new Vector3[copiedObject->vertexCount];
+	memcpy(newObj->realVertices, copiedObject->realVertices, sizeof(Vector3) * copiedObject->vertexCount);
+
+	newObj->vertexCount = copiedObject->vertexCount;
+	newObj->indexCount = copiedObject->indexCount;
+
+	newObj->position = copiedObject->position;
+	newObj->scale = copiedObject->scale;
+	newObj->rotation = copiedObject->rotation;
+
+	newObj->color = copiedObject->color;
+
+	newObj->ad = new bool*[copiedObject->vertexCount];
+	for (int i = 0; i < copiedObject->vertexCount; i++)
+	{
+		newObj->ad[i] = new bool[copiedObject->vertexCount];
+
+		for (int j = 0; j < copiedObject->vertexCount; j++)
+			newObj->ad[i][j] = copiedObject->ad[i][j];
+	}
+
+	if (copiedObject->texture != NULL)
+	{
+		newObj->texture = new char[24 + 4 * copiedObject->textureW * copiedObject->textureH];
+		memcpy(newObj->texture, copiedObject->texture, 24 + 4 * copiedObject->textureW * copiedObject->textureH);
+	}
+	else
+		newObj->texture = NULL;
+
+	newObj->textureW = copiedObject->textureW;
+	newObj->textureH = copiedObject->textureH;
+}
+
+
 void SortVerticesCounterclockwise(int neighbors[], int neighborsCounter, Object* object, Vector3 centroid)
 {
 	Vector3 normal = SurfaceNormal(object->vertices[neighbors[0]], object->vertices[neighbors[1]], object->vertices[neighbors[2]]);

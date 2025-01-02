@@ -3,7 +3,8 @@
 struct Button
 {
 	Vector2 center;
-	int width, height;
+	int width  = 50;
+	int height = 50;
 
 	char text[256] = "";
 	char imagePath[256] = "";
@@ -19,7 +20,7 @@ struct Button
 
 struct Menu
 {
-	Button buttons[7];
+	Button buttons[12];
 	int buttonCount = sizeof(buttons) / sizeof(Button);
 };
 
@@ -29,50 +30,91 @@ Menu* NewMenu(Flags* flags)
 
 	// close
 	menu->buttons[0].center = {1875, 35};
-	menu->buttons[0].width  = 50;
-	menu->buttons[0].height = 50;
+	menu->buttons[0].backColor   = RGB(244, 54, 54);
+	menu->buttons[0].shadowColor = RGB(206, 30, 30);
 	char path[512]; strcpy(path, flags->workingDir); strcat(path, "\\icons\\close.bmp");
 	strcpy(menu->buttons[0].imagePath, path);
-	strcpy(path, flags->workingDir); strcat(path, "\\icons\\closePressed.bmp");
+	strcpy(path, flags->workingDir); strcat(path, "\\icons\\close_press.bmp");
 	strcpy(menu->buttons[0].pressedImagePath, path);
 
 	// new
-	menu->buttons[1].center = {100, 35};
-	menu->buttons[1].width  = 150;
-	menu->buttons[1].height =  50;
-	strcpy(menu->buttons[1].text, "NEW");
+	menu->buttons[1].center = {50, 35};
+	strcpy(path, flags->workingDir); strcat(path, "\\icons\\new.bmp");
+	strcpy(menu->buttons[1].imagePath, path);
+	strcpy(path, flags->workingDir); strcat(path, "\\icons\\new_press.bmp");
+	strcpy(menu->buttons[1].pressedImagePath, path);
 
 	// save
-	menu->buttons[2].center = {275, 35};
-	menu->buttons[2].width  = 150;
-	menu->buttons[2].height =  50;
-	strcpy(menu->buttons[2].text, "SAVE");
+	menu->buttons[2].center = {125, 35};
+	strcpy(path, flags->workingDir); strcat(path, "\\icons\\save.bmp");
+	strcpy(menu->buttons[2].imagePath, path);
+	strcpy(path, flags->workingDir); strcat(path, "\\icons\\save_press.bmp");
+	strcpy(menu->buttons[2].pressedImagePath, path);
 
 	// load
-	menu->buttons[3].center = {450, 35};
-	menu->buttons[3].width  = 150;
-	menu->buttons[3].height =  50;
-	strcpy(menu->buttons[3].text, "OPEN");
+	menu->buttons[3].center = {200, 35};
+	strcpy(path, flags->workingDir); strcat(path, "\\icons\\load.bmp");
+	strcpy(menu->buttons[3].imagePath, path);
+	strcpy(path, flags->workingDir); strcat(path, "\\icons\\load_press.bmp");
+	strcpy(menu->buttons[3].pressedImagePath, path);
 
 	// change color
-	menu->buttons[4].center = { 1050, 35 };
-	menu->buttons[4].width = 150;
-	menu->buttons[4].height = 50;
-	strcpy(menu->buttons[4].text, "COLOR");
+	menu->buttons[4].center = { 630, 35 };
+	strcpy(path, flags->workingDir); strcat(path, "\\icons\\color.bmp");
+	strcpy(menu->buttons[4].imagePath, path);
+	strcpy(path, flags->workingDir); strcat(path, "\\icons\\color_press.bmp");
+	strcpy(menu->buttons[4].pressedImagePath, path);
 	menu->buttons[4].disabled = true;
 
 	// x-ray
-	menu->buttons[5].center = { 1300, 35 };
-	menu->buttons[5].width = 150;
-	menu->buttons[5].height = 50;
-	strcpy(menu->buttons[5].text, "X-RAY");
+	menu->buttons[5].center = { 780, 35 };
+	strcpy(path, flags->workingDir); strcat(path, "\\icons\\xray.bmp");
+	strcpy(menu->buttons[5].imagePath, path);
+	strcpy(path, flags->workingDir); strcat(path, "\\icons\\xray_press.bmp");
+	strcpy(menu->buttons[5].pressedImagePath, path);
 
 	// texture
-	menu->buttons[6].center = { 1550, 35 };
-	menu->buttons[6].width = 150;
-	menu->buttons[6].height = 50;
-	strcpy(menu->buttons[6].text, "TEXTURE");
+	menu->buttons[6].center = { 705, 35 };
+	strcpy(path, flags->workingDir); strcat(path, "\\icons\\texture.bmp");
+	strcpy(menu->buttons[6].imagePath, path);
+	strcpy(path, flags->workingDir); strcat(path, "\\icons\\texture_press.bmp");
+	strcpy(menu->buttons[6].pressedImagePath, path);
 	menu->buttons[6].disabled = true;
+
+	// copy
+	menu->buttons[7].center = { 340, 35 };
+	strcpy(path, flags->workingDir); strcat(path, "\\icons\\copy.bmp");
+	strcpy(menu->buttons[7].imagePath, path);
+	strcpy(path, flags->workingDir); strcat(path, "\\icons\\copy_press.bmp");
+	strcpy(menu->buttons[7].pressedImagePath, path);
+	
+	// paste
+	menu->buttons[8].center = { 415, 35 };
+	strcpy(path, flags->workingDir); strcat(path, "\\icons\\paste.bmp");
+	strcpy(menu->buttons[8].imagePath, path);
+	strcpy(path, flags->workingDir); strcat(path, "\\icons\\paste_press.bmp");
+	strcpy(menu->buttons[8].pressedImagePath, path);
+
+	// delete
+	menu->buttons[9].center = { 490, 35 };
+	strcpy(path, flags->workingDir); strcat(path, "\\icons\\delete.bmp");
+	strcpy(menu->buttons[9].imagePath, path);
+	strcpy(path, flags->workingDir); strcat(path, "\\icons\\delete_press.bmp");
+	strcpy(menu->buttons[9].pressedImagePath, path);
+
+	// cube
+	menu->buttons[10].center = { 925, 35 };
+	strcpy(path, flags->workingDir); strcat(path, "\\icons\\cube.bmp");
+	strcpy(menu->buttons[10].imagePath, path);
+	strcpy(path, flags->workingDir); strcat(path, "\\icons\\cube_press.bmp");
+	strcpy(menu->buttons[10].pressedImagePath, path);
+
+	// icosa
+	menu->buttons[11].center = { 1000, 35 };
+	strcpy(path, flags->workingDir); strcat(path, "\\icons\\icosa.bmp");
+	strcpy(menu->buttons[11].imagePath, path);
+	strcpy(path, flags->workingDir); strcat(path, "\\icons\\icosa_press.bmp");
+	strcpy(menu->buttons[11].pressedImagePath, path);
 
 	return menu;
 }
@@ -82,7 +124,7 @@ void DrawButton(Button& button)
 	int shadowOffset = 5;
 	int buttonOffset = 0;
 
-	if (button.pressed == true)
+	if (button.pressed || button.disabled)
 		buttonOffset = 5;
 
 	// shadow
@@ -94,7 +136,7 @@ void DrawButton(Button& button)
 	floodfill(button.center.x, button.center.y, button.shadowColor);
 
 	// background
-	if (button.pressed == false)
+	if (button.pressed == false && button.disabled == false)
 	{
 		setcolor(button.backColor);
 		setfillstyle(SOLID_FILL, button.backColor);
@@ -105,7 +147,7 @@ void DrawButton(Button& button)
 	}
 
 	// text
-	if(button.pressed == false)
+	if(button.pressed == false && button.disabled == false)
 		setbkcolor(button.backColor);
 	else
 		setbkcolor(button.shadowColor);
@@ -117,7 +159,7 @@ void DrawButton(Button& button)
 	// image
 	if (strcmp(button.imagePath, "") != 0)
 	{
-		if(button.pressed == false)
+		if(button.pressed == false && button.disabled == false)
 			readimagefile(button.imagePath, buttonOffset + button.center.x - button.width/2, buttonOffset + button.center.y - button.height/2,
 											buttonOffset + button.center.x + button.width/2, buttonOffset + button.center.y + button.height/2);
 		else
@@ -125,6 +167,7 @@ void DrawButton(Button& button)
 		                                   		   buttonOffset + button.center.x + button.width / 2, buttonOffset + button.center.y + button.height / 2);
 	}
 }
+
 
 void DrawAxis()
 {
@@ -166,12 +209,33 @@ void DrawMenu(Menu* menu)
 	setcolor(back_highlight);
 	setlinestyle(SOLID_LINE, 0, 5);
 	rectangle(0, 79, 1920, 84);
+
+	int delim_color = RGB(42, 52, 102);
+
+	// delimitator intre grupuri de butoane
+	setcolor(delim_color);
+	setlinestyle(SOLID_LINE, 0, 5);
+	rectangle(270, 10, 275, 70);
+
+	setlinestyle(SOLID_LINE, 0, THICK_WIDTH);
+
+	// delimitator 2
+	setcolor(delim_color);
+	setlinestyle(SOLID_LINE, 0, 5);
+	rectangle(560, 10, 565, 70);
+
+	setlinestyle(SOLID_LINE, 0, THICK_WIDTH);
+
+	// delimitator 3
+	setcolor(delim_color);
+	setlinestyle(SOLID_LINE, 0, 5);
+	rectangle(850, 10, 855, 70);
+
 	setlinestyle(SOLID_LINE, 0, THICK_WIDTH);
 
 	// buttons
 	for (int i = 0; i < menu->buttonCount; i++)
-		if(menu->buttons[i].disabled == false)
-			DrawButton(menu->buttons[i]);
+		DrawButton(menu->buttons[i]);
 	DrawAxis();
 }
 
@@ -252,4 +316,161 @@ void DrawPlane()
 		}
 
 	delete quad;
+}
+
+
+
+void DrawTooltip()
+{
+	int x = mousex() + 20;
+	int y = mousey() + 30;
+
+	if (x > WINDOW_WIDTH * 3. / 4)
+		x -= 300;
+
+	int width  = 250;
+	int height = 90;
+
+	setlinestyle(SOLID_LINE, 0, 5);
+	setcolor(RGB(4, 3, 22));
+	rectangle(x, y, x + width, y + height);
+	setlinestyle(SOLID_LINE, 0, THICK_WIDTH);
+
+	setfillstyle(SOLID_FILL, RGB(14, 19, 52));
+	floodfill(x + width/2, y + height/2, RGB(4, 3, 22));
+
+	setbkcolor(RGB(14, 19, 52));
+
+	setcolor(RGB(184, 211, 255));
+	settextstyle(GOTHIC_FONT, HORIZ_DIR, 0);
+	setusercharsize(5, 6, 5, 3);
+	outtextxy(x + 20, y + 10, flags->tooltipTitle);
+
+	setcolor(RGB(42, 52, 102));
+	outtextxy(x + 20, y + 45, flags->tooltipDescription);
+
+	setbkcolor(RGB(0, 0, 0));
+}
+
+void CheckButtonHover(Menu* menu)
+{
+	int mouseX = mousex();
+	int mouseY = mousey();
+
+	int difX = flags->oldMouseX - mouseX;
+	int difY = flags->oldMouseY - mouseY;
+
+	if (difX == 0 && difY == 0)
+		return;
+
+	bool found = false;
+
+	for (int i = 0; i < menu->buttonCount; i++)
+	{
+		int left   = menu->buttons[i].center.x - menu->buttons[i].width  / 2;
+		int right  = menu->buttons[i].center.x + menu->buttons[i].width  / 2;
+		int top    = menu->buttons[i].center.y - menu->buttons[i].height / 2;
+		int bottom = menu->buttons[i].center.y + menu->buttons[i].height / 2;
+
+		if (mouseX >= left && mouseX <= right && mouseY >= top && mouseY <= bottom)
+		{
+			found = true;
+
+			switch (i)
+			{
+				case 0:
+				{
+					strcpy(flags->tooltipTitle, "Exit");
+					strcpy(flags->tooltipDescription, "Keyb. Esc");
+				}
+				break;
+
+				case 1:
+				{
+					strcpy(flags->tooltipTitle, "New Scene");
+					strcpy(flags->tooltipDescription, "Keyb. Ctrl + N");
+				}
+				break;
+
+				case 2:
+				{
+					strcpy(flags->tooltipTitle, "Save to File");
+					strcpy(flags->tooltipDescription, "Keyb. Ctrl + S");
+				}
+				break;
+
+				case 3:
+				{
+					strcpy(flags->tooltipTitle, "Open File");
+					strcpy(flags->tooltipDescription, "Keyb. Ctrl + O");
+				}
+				break;
+
+				case 4:
+				{
+					strcpy(flags->tooltipTitle, "Color");
+					strcpy(flags->tooltipDescription, "Keyb. None");
+				}
+				break;
+
+				case 5:
+				{
+					strcpy(flags->tooltipTitle, "X-Ray");
+					strcpy(flags->tooltipDescription, "Keyb. None");
+				}
+				break;
+
+				case 6:
+				{
+					strcpy(flags->tooltipTitle, "Texture");
+					strcpy(flags->tooltipDescription, "Keyb. None");
+				}
+				break;
+
+				case 7:
+				{
+					strcpy(flags->tooltipTitle, "Copy");
+					strcpy(flags->tooltipDescription, "Keyb. Ctrl + C");
+				}
+				break;
+
+				case 8:
+				{
+					strcpy(flags->tooltipTitle, "Paste");
+					strcpy(flags->tooltipDescription, "Keyb. Ctrl + V");
+				}
+				break;
+
+				case 9:
+				{
+					strcpy(flags->tooltipTitle, "Delete");
+					strcpy(flags->tooltipDescription, "Keyb. Backspace");
+				}
+				break;
+
+				case 10:
+				{
+					strcpy(flags->tooltipTitle, "Cube");
+					strcpy(flags->tooltipDescription, "Keyb. C + 1");
+				}
+				break;
+
+				case 11:
+				{
+					strcpy(flags->tooltipTitle, "Icosahedron");
+					strcpy(flags->tooltipDescription, "Keyb. C + 2");
+				}
+				break;
+			}
+
+			flags->drawTooltip  = true;
+			flags->updateWindow = true;
+		}
+	}
+
+	if (found == false && flags->drawTooltip == true)
+	{
+		flags->drawTooltip  = false;
+		flags->updateWindow = true;
+	}
 }

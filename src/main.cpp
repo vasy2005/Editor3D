@@ -43,7 +43,7 @@ int main()
 
 	objects = new Object*[flags->objectCapacity]; // init with capacity of 16, resize later
 
-	canvas       = new char[24 + 4 * WINDOW_WIDTH * WINDOW_HEIGHT];
+	canvas = new char[24 + 4 * WINDOW_WIDTH * WINDOW_HEIGHT];
 
 	int buffer = 0;
 
@@ -55,8 +55,12 @@ int main()
 		// getMouseInputPos(objects, objectCount); // se deselecteaza obiectul si cand dai clic pe meniu
 		checkKeyPressed();
 
-		// ascunde butoanele texture si color
-		menu->buttons[4].disabled = menu->buttons[6].disabled = (selectedObject == NULL);
+		// ascunde paste cand nu e nimic in clipboard
+		menu->buttons[8].disabled = (copiedObject == NULL);
+
+		// ascunde copy, delete, texture si color cand nu este nici un obiect selectat
+		menu->buttons[4].disabled = menu->buttons[6].disabled 
+			= menu->buttons[7].disabled = menu->buttons[9].disabled = (selectedObject == NULL);
 
 		///// DRAW HERE ///////////////////////////////////////
 		if (flags->updateWindow == true) // only redraw screen if there are changes
@@ -84,6 +88,9 @@ int main()
 				DrawObject(objects[i]);
 
 			DrawMenu(menu); // draw over objects
+
+			if (flags->drawTooltip == true)
+				DrawTooltip();
 
 			//if (selectedObject != NULL && selectedObject->texture != NULL)
 			//{

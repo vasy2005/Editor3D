@@ -71,6 +71,58 @@ void CameraControls()
 		flags->updateWindow = true;
 }
 
+void AddNewObject(int type, bool atOrigin)
+{
+	int mouseX = mousex();
+	int mouseY = mousey();
+
+	if (objectCount + 1 > flags->objectCapacity) // resize objects if too many are added
+	{
+		flags->objectCapacity *= 2;
+		Object** temp = new Object * [flags->objectCapacity];
+		memcpy(temp, objects, sizeof(Object*) * objectCount);
+		delete[] objects;
+		objects = temp;
+	}
+
+	int oldObjectCount = objectCount;
+
+	int random = -1;
+	if (IsPressed('R')) // create a random object C + R
+		random = rand() % 2;
+
+	// position relative to camera
+	Vector3 position;
+	
+	if (atOrigin == false)
+	{
+		position.x = camera.position.x + (float)(mouseX - WINDOW_WIDTH / 2);
+		position.y = camera.position.y + (float)(mouseY - WINDOW_HEIGHT / 2);
+		position.z = camera.position.z + -100;
+		ViewMatrix(position);
+		Translate(position, camera.position);
+	}
+	else
+		position = { 0, 0, 0 };
+
+	if (type == 0 || random == 0) // create cube C + 1
+		objects[objectCount++] = NewCube(position, { 100, 100, 100 }, { 0, 0, 0 }, { 255, 255, 255 });
+
+	else if (type == 1 || random == 1) // create icosahedron C + 2
+		objects[objectCount++] = NewIcosahedron(position, { 50, 50, 50 }, { 0, 0, 0 }, { 255, 255, 255 });
+
+	if (oldObjectCount != objectCount) // modified
+	{
+		if (random != -1)
+			RandomizeObjectProperties(objects[objectCount - 1]);
+
+		selectedObject = objects[objectCount - 1]; // auto select newly created object
+		flags->updateWindow = true;
+		flags->pressedCreate = true;
+	}
+}
+
+
 void CheckButtonPress(Object**& objects, int& objectCount, Flags*& flags, Menu*& menu)
 {
 	int mouseX = mousex();
@@ -149,6 +201,26 @@ void CheckButtonPress(Object**& objects, int& objectCount, Flags*& flags, Menu*&
 					OpenTexture(selectedObject->texture, selectedObject->textureW, selectedObject->textureH);
 					flags->updateWindow = true;
 					break;
+
+				case 7:
+					CopyObject(selectedObject);
+					break;
+
+				case 8:
+					PasteObject(copiedObject);
+					break;
+
+				case 9:
+					DeleteObject(selectedObject, objects, objectCount);
+					break;
+
+				case 10:
+					AddNewObject(0, true);
+					break;
+
+				case 11:
+					AddNewObject(1, true);
+					break;
 			}
 
 			flags->selectedButton = -1;
@@ -169,7 +241,7 @@ void CheckButtonPress(Object**& objects, int& objectCount, Flags*& flags, Menu*&
 				int top = menu->buttons[i].center.y - menu->buttons[i].height / 2;
 				int bottom = menu->buttons[i].center.y + menu->buttons[i].height / 2;
 
-				if (mouseX >= left && mouseX <= right && mouseY >= top && mouseY <= bottom)
+				if (menu->buttons[i].disabled == false && mouseX >= left && mouseX <= right && mouseY >= top && mouseY <= bottom)
 				{
 					flags->buttonAnimation = 0;
 					flags->selectedButton = i;
@@ -193,6 +265,7 @@ void ProcessInput(Object**& objects, int& objectCount, Flags*& flags, Menu*& men
 
 
 	CameraControls();
+	CheckButtonHover(menu);
 	CheckButtonPress(objects, objectCount, flags, menu);
 
 
@@ -213,6 +286,28 @@ void ProcessInput(Object**& objects, int& objectCount, Flags*& flags, Menu*& men
 	if (IsPressed(VK_CONTROL) && IsPressed('O'))
 		Open(objects, objectCount, flags);
 
+	if (IsPressed(VK_DELETE) || IsPressed(VK_BACK))
+	{
+		if (flags->pressedDelete == false)
+			DeleteObject(selectedObject, objects, objectCount);
+		flags->pressedDelete = true;
+	}
+	else
+		flags->pressedDelete = false;
+
+	if (IsPressed(VK_CONTROL) && IsPressed('C'))
+		CopyObject(selectedObject);
+
+	if (IsPressed(VK_CONTROL) && IsPressed('V'))
+	{
+		if(flags->pressedPaste == false)
+			PasteObject(selectedObject);
+
+		flags->pressedPaste = true;
+	}
+	else
+		flags->pressedPaste = false;
+
 
 	//create new vertex at highlighted indice
 	if (addVerticeObject && IsPressed(VK_CONTROL) && IsPressed('P'))
@@ -231,44 +326,10 @@ void ProcessInput(Object**& objects, int& objectCount, Flags*& flags, Menu*& men
 	{
 		if (flags->pressedCreate == false)
 		{
-			if (objectCount + 1 > flags->objectCapacity) // resize objects if too many are added
-			{
-				flags->objectCapacity *= 2;
-				Object** temp = new Object * [flags->objectCapacity];
-				memcpy(temp, objects, sizeof(Object*) * objectCount);
-				delete[] objects;
-				objects = temp;
-			}
-
-			int oldObjectCount = objectCount;
-
-			int random = -1;
-			if (IsPressed('R')) // create a random object C + R
-				random = rand() % 2;
-
-			// position relative to camera
-			Vector3 position;
-			position.x = camera.position.x + (float)(mouseX - WINDOW_WIDTH  / 2);
-			position.y = camera.position.y + (float)(mouseY - WINDOW_HEIGHT / 2);
-			position.z = camera.position.z + -100;
-			ViewMatrix(position);
-			Translate(position, camera.position);
-
-			if (IsPressed('1') || random == 0) // create cube C + 1
-				objects[objectCount++] = NewCube(position, { 100, 100, 100 }, { 0, 0, 0 }, { 255, 255, 255 });
-
-			else if (IsPressed('2') || random == 1) // create icosahedron C + 2
-				objects[objectCount++] = NewIcosahedron(position, { 50, 50, 50 }, { 0, 0, 0 }, { 255, 255, 255 });
-
-			if (oldObjectCount != objectCount) // modified
-			{
-				if (random != -1)
-					RandomizeObjectProperties(objects[objectCount - 1]);
-
-				selectedObject = objects[objectCount - 1]; // auto select newly created object
-				flags->pressedCreate = true;
-				flags->updateWindow  = true;
-			}
+			if (IsPressed('1'))
+				AddNewObject(0, false);
+			else if(IsPressed('2'))
+				AddNewObject(1, false);
 		}
 	}
 	else

@@ -30,7 +30,7 @@ struct Object
 	Vector3* vertices;
 	int** indices; // triangles
 
-	UV* uv;
+	UV* uv = NULL;
 
 	Vector3* realVertices;
 
@@ -73,6 +73,12 @@ struct Flags
 	int oldMouseY = -1;
 	bool pressedCreate = false;
 	bool pressedLeftClick = false;
+	bool pressedDelete = false;
+	bool pressedPaste = false;
+
+	bool drawTooltip = false;
+	char tooltipTitle[512] = "Brinza";
+	char tooltipDescription[512] = "Keyb. Ctrl + B";
 
 	int selectedButton = -1;
 	int buttonAnimation;

@@ -22,9 +22,25 @@ void DrawTriangle(int pos, Object* object)
 	Vector3* second = &object->realVertices[indice[1]];
 	Vector3* third = &object->realVertices[indice[2]];
 
-	Vector2 uv1 = object->uv[pos].f;
-	Vector2 uv2 = object->uv[pos].s;
-	Vector2 uv3 = object->uv[pos].t;
+	Vector2 uv1;
+	Vector2 uv2;
+	Vector2 uv3;
+
+	if (object->texture)
+	{
+		if (object->uv != NULL)
+		{
+			uv1 = object->uv[pos].f;
+			uv2 = object->uv[pos].s;
+			uv3 = object->uv[pos].t;
+		}
+		else // iam dat si eu niste valoari implicite cand nu e cub. toate fetele o sa arate la fel da in fine merge.
+		{
+			uv1 = { 0.250, 0.333 };
+			uv2 = { 0.250, 0.666 };
+			uv3 = { 0.500, 0.666 };
+ 		}
+	}
 
 	Vector3 normal = SurfaceNormal(*first, *second, *third);
 	Normalize(normal);
@@ -45,6 +61,9 @@ void DrawTriangle(int pos, Object* object)
 	int b = object->color.b - average; if (b < 0) b = 0; if (b > 255) b = 255;
 
 	int final_color = RGB(r, g, b);
+
+	if (final_color < 15) // se foloseau culorile predefinite RED GREEN YELLOW etc 0-15 in loc de negru
+		final_color = RGB(0, 0, 0);
 	
 
 	if (object == addVerticeObject && highlighted[pos])
@@ -72,7 +91,7 @@ void DrawTriangle(int pos, Object* object)
 	if(flags->xray == false)
 	{
 		if (object->texture != NULL)
-			DrawTexturedTriangle(*first, *second, *third, uv1, uv2, uv3, object->texture, object->textureW, object->textureH);
+			DrawTexturedTriangle(*first, *second, *third, uv1, uv2, uv3, object->texture, object->textureW, object->textureH, average, RGB(object->color.r, object->color.g, object->color.b));
 		else
 		{
 			int aux[6] = { first->x, first->y, second->x, second->y, third->x, third->y };
@@ -178,13 +197,13 @@ void DrawObject(Object* object)
 	for (int i = 0; i < posLen; ++i)
 		highlighted[pos[i]] = 1;
 
-	if(object->texture != NULL)
+	if(object->texture != NULL && flags->xray == false)
 		Screenshot();
 
 	for (int i = 0; i < object->indexCount; i++)
 		DrawTriangle(i, object);
 	
-	if (object->texture != NULL)
+	if (object->texture != NULL && flags->xray == false)
 		DrawFrame();
 }
 
