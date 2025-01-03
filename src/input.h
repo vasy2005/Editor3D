@@ -123,6 +123,147 @@ void AddNewObject(int type, bool atOrigin)
 }
 
 
+void CheckInputFieldPress()
+{
+	int mouseX = mousex();
+	int mouseY = mousey();
+
+	if (flags->floatWindowClosed == true)
+		return;
+
+	for(int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
+		{
+			int left   = floatWindow.pivotX + 60  + 220 * j;
+			int top    = floatWindow.pivotY + 130 + 120 * i;
+			int right  = left + 170;
+			int bottom = top  +  40;
+
+			//setcolor(RGB(255, 0, 0));
+			//circle(left, top, 10);
+
+			if (mouseX >= left && mouseX <= right && mouseY >= top && mouseY <= bottom)
+			{
+				int id = i * 3 + j;
+
+				double* value;
+
+				switch (id)
+				{
+					case 0:
+						value = &selectedObject->position.x;
+						break;
+
+					case 1:
+						value = &selectedObject->position.y;
+						break;
+
+					case 2:
+						value = &selectedObject->position.z;
+						break;
+
+					case 3:
+						value = &selectedObject->scale.x;
+						break;
+
+					case 4:
+						value = &selectedObject->scale.y;
+						break;
+
+					case 5:
+						value = &selectedObject->scale.z;
+						break;
+
+					case 6:
+					{
+						value = &selectedObject->rotation.x;
+						*value -= selectedObject->realRotation.x;
+					}
+					break;
+
+					case 7:
+					{
+						value = &selectedObject->rotation.y;
+						*value -= selectedObject->realRotation.y;
+					}
+					break;
+
+					case 8:
+					{
+						value = &selectedObject->rotation.z;
+						*value -= selectedObject->realRotation.z;
+					}
+					break;
+				}
+
+				char buffer[512] = "";
+				int k = 0;
+
+				while (kbhit()) // empty input buffer before hand
+					getch();
+
+				bool firstTime = true;
+
+				while (true)
+				{
+					if (kbhit() || firstTime)
+					{
+						if (firstTime == false)
+						{
+							char c = getch();
+
+							if (GetAsyncKeyState(VK_RETURN))
+								break;
+
+							if (c == '\b' && strlen(buffer) != 0)
+								buffer[--k] = NULL;
+							else if ((c >= '0' && c <= '9') || c == '.' || c == '-' || c == '+')
+							{
+								buffer[k] = c;
+								buffer[++k] = NULL;
+							}
+						}
+
+						setlinestyle(SOLID_LINE, 0, 5);
+						setcolor(RGB(4, 3, 22));
+						rectangle(left, top, right, bottom);
+						setlinestyle(SOLID_LINE, 0, THICK_WIDTH);
+
+						setfillstyle(SOLID_FILL, RGB(0, 0, 0));
+						floodfill(left + 6, top + 6, RGB(4, 3, 22));
+
+						settextstyle(GOTHIC_FONT, HORIZ_DIR, 0);
+						setusercharsize(5, 6, 5, 3);
+						setcolor(RGB(42, 52, 102));
+
+						if(strlen(buffer) <= 10)
+							outtextxy(left + 10, top + 5, buffer);
+						else
+							outtextxy(left + 10, top + 5, buffer + strlen(buffer) - 1 - 9);
+
+						firstTime = false;
+					}
+
+					delay(16);
+				}
+
+				if (strcmp(buffer, "") != 0)
+				{
+					if (id >= 6) // converteste rotatia in radieni
+						(*value) += atof(buffer) * PI / 180;
+					else
+						*value = atof(buffer);
+
+					if (id == 1)
+						*value *= -1;
+				}
+				else
+					*value = 0;
+				flags->updateWindow = true;
+			}
+		}
+}
+
 void CheckButtonPress(Object**& objects, int& objectCount, Flags*& flags, Menu*& menu)
 {
 	int mouseX = mousex();
@@ -198,7 +339,7 @@ void CheckButtonPress(Object**& objects, int& objectCount, Flags*& flags, Menu*&
 					if (menu->buttons[6].disabled == true)
 						break;
 
-					OpenTexture(selectedObject->texture, selectedObject->textureW, selectedObject->textureH);
+					OpenTexture(selectedObject->texture, selectedObject->textureW, selectedObject->textureH, selectedObject->texturePath);
 					flags->updateWindow = true;
 					break;
 
@@ -229,16 +370,43 @@ void CheckButtonPress(Object**& objects, int& objectCount, Flags*& flags, Menu*&
 		flags->buttonAnimation++;
 	}
 
-	// check button pressed
+	// check button pressed also float window movement
 	if (IsPressed(VK_LBUTTON))
 	{
 		if (flags->pressedLeftClick == false)
 		{
+			// input fields
+			CheckInputFieldPress();
+
+			// float window
+			if(flags->floatWindowClosed == false)
+			{
+				int left = floatWindow.pivotX;
+				int right = left + floatWindow.width;
+				int top = floatWindow.pivotY;
+				int bottom = top + floatWindow.titleBarHeight;
+
+				if (mouseX >= left && mouseX <= right && mouseY >= top && mouseY <= bottom)
+				{
+					if(mouseX > floatWindow.pivotX + floatWindow.width - 50) // close button pressed probably
+					{
+						flags->floatWindowClosed = true;
+						flags->updateWindow = true;
+					}
+					else
+					{
+						flags->grabbedFloatWindow = true;
+						flags->updateWindow = true;
+					}
+				}
+			}
+
+			if(flags->grabbedFloatWindow == false)
 			for (int i = 0; i < menu->buttonCount; i++)
 			{
-				int left = menu->buttons[i].center.x - menu->buttons[i].width / 2;
-				int right = menu->buttons[i].center.x + menu->buttons[i].width / 2;
-				int top = menu->buttons[i].center.y - menu->buttons[i].height / 2;
+				int left   = menu->buttons[i].center.x - menu->buttons[i].width / 2;
+				int right  = menu->buttons[i].center.x + menu->buttons[i].width / 2;
+				int top    = menu->buttons[i].center.y - menu->buttons[i].height / 2;
 				int bottom = menu->buttons[i].center.y + menu->buttons[i].height / 2;
 
 				if (menu->buttons[i].disabled == false && mouseX >= left && mouseX <= right && mouseY >= top && mouseY <= bottom)
@@ -253,9 +421,22 @@ void CheckButtonPress(Object**& objects, int& objectCount, Flags*& flags, Menu*&
 
 			flags->pressedLeftClick = true;
 		}
+
+		int difX = flags->oldMouseX - mouseX;
+		int difY = flags->oldMouseY - mouseY;
+
+		if (flags->grabbedFloatWindow && difX * difY != 0 )
+		{
+			floatWindow.pivotX -= difX;
+			floatWindow.pivotY -= difY;
+			flags->updateWindow = true;
+		}
 	}
-	else
-		flags->pressedLeftClick = false;
+	else // released left click
+	{
+		flags->pressedLeftClick   = false;
+		flags->grabbedFloatWindow = false;
+	}
 }
 
 void ProcessInput(Object**& objects, int& objectCount, Flags*& flags, Menu*& menu)
@@ -301,7 +482,7 @@ void ProcessInput(Object**& objects, int& objectCount, Flags*& flags, Menu*& men
 	if (IsPressed(VK_CONTROL) && IsPressed('V'))
 	{
 		if(flags->pressedPaste == false)
-			PasteObject(selectedObject);
+			PasteObject(copiedObject);
 
 		flags->pressedPaste = true;
 	}

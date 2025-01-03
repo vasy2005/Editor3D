@@ -24,6 +24,42 @@ struct Menu
 	int buttonCount = sizeof(buttons) / sizeof(Button);
 };
 
+void LoadIconsInMemory(Menu* menu)
+{
+	// readimage e prea ineficient pt ca tre sa ia de fiecare data imaginile butoanelor de pe disc. injumatateste frameratul
+	// le citesc o singura data si le pastrez in RAM/ memoria programului si folosesc functia putimage() ca sa fie mai rapid
+
+	int w, h;
+	for (int i = 0; i < 12; i++)
+	{
+		icons[i] = NULL;
+		icons_press[i] = NULL;
+
+		int width  = menu->buttons[i].width;
+		int height = menu->buttons[i].height;
+
+		int x = menu->buttons[i].center.x - width /2;
+		int y = menu->buttons[i].center.y - height/2;
+
+		readimagefile(menu->buttons[i].imagePath, 0, 0, width - 1, height - 1);
+		icons[i] = new unsigned char[24 + width * height * 4];
+		getimage(0, 0, width - 1, height - 1, icons[i]);
+
+		readimagefile(menu->buttons[i].pressedImagePath, 0, 0, width - 1, height - 1);
+		icons_press[i] = new unsigned char[24 + width * height * 4];
+		getimage(0, 0, width - 1, height - 1, icons_press[i]);
+	}
+}
+
+void FreeIconsInMemory()
+{
+	for (int i = 0; i < 12; i++)
+	{
+		delete[] icons[i];
+		delete[] icons_press[i];
+	}
+}
+
 Menu* NewMenu(Flags* flags)
 {
 	Menu* menu = new Menu;
@@ -116,10 +152,12 @@ Menu* NewMenu(Flags* flags)
 	strcpy(path, flags->workingDir); strcat(path, "\\icons\\icosa_press.bmp");
 	strcpy(menu->buttons[11].pressedImagePath, path);
 
+	LoadIconsInMemory(menu);
+
 	return menu;
 }
 
-void DrawButton(Button& button)
+void DrawButton(Button& button, int i)
 {
 	int shadowOffset = 5;
 	int buttonOffset = 0;
@@ -159,12 +197,10 @@ void DrawButton(Button& button)
 	// image
 	if (strcmp(button.imagePath, "") != 0)
 	{
-		if(button.pressed == false && button.disabled == false)
-			readimagefile(button.imagePath, buttonOffset + button.center.x - button.width/2, buttonOffset + button.center.y - button.height/2,
-											buttonOffset + button.center.x + button.width/2, buttonOffset + button.center.y + button.height/2);
+		if (button.pressed == false && button.disabled == false)
+			putimage(buttonOffset + button.center.x - button.width / 2, buttonOffset + button.center.y - button.height / 2, icons[i], COPY_PUT);
 		else
-			readimagefile(button.pressedImagePath, buttonOffset + button.center.x - button.width / 2, buttonOffset + button.center.y - button.height / 2,
-		                                   		   buttonOffset + button.center.x + button.width / 2, buttonOffset + button.center.y + button.height / 2);
+			putimage(buttonOffset + button.center.x - button.width / 2, buttonOffset + button.center.y - button.height / 2, icons_press[i], COPY_PUT);
 	}
 }
 
@@ -194,49 +230,6 @@ void DrawAxis()
 	// y axis
 	setcolor(RGB(0, 0, 255));
 	line(posX, posY, posX + camera.up.x * length, posY - camera.up.y * length);
-}
-
-void DrawMenu(Menu* menu)
-{
-	// background
-	int back_color = RGB(14, 19, 52);
-	setcolor(back_color);
-	rectangle(0, 0, 1920, 75);
-	setfillstyle(SOLID_FILL, back_color);
-	floodfill(5, 5, back_color);
-
-	int back_highlight = RGB(5, 8, 32);
-	setcolor(back_highlight);
-	setlinestyle(SOLID_LINE, 0, 5);
-	rectangle(0, 79, 1920, 84);
-
-	int delim_color = RGB(42, 52, 102);
-
-	// delimitator intre grupuri de butoane
-	setcolor(delim_color);
-	setlinestyle(SOLID_LINE, 0, 5);
-	rectangle(270, 10, 275, 70);
-
-	setlinestyle(SOLID_LINE, 0, THICK_WIDTH);
-
-	// delimitator 2
-	setcolor(delim_color);
-	setlinestyle(SOLID_LINE, 0, 5);
-	rectangle(560, 10, 565, 70);
-
-	setlinestyle(SOLID_LINE, 0, THICK_WIDTH);
-
-	// delimitator 3
-	setcolor(delim_color);
-	setlinestyle(SOLID_LINE, 0, 5);
-	rectangle(850, 10, 855, 70);
-
-	setlinestyle(SOLID_LINE, 0, THICK_WIDTH);
-
-	// buttons
-	for (int i = 0; i < menu->buttonCount; i++)
-		DrawButton(menu->buttons[i]);
-	DrawAxis();
 }
 
 void DrawPlane()
@@ -473,4 +466,205 @@ void CheckButtonHover(Menu* menu)
 		flags->drawTooltip  = false;
 		flags->updateWindow = true;
 	}
+}
+
+
+
+void DrawFPS()
+{
+	setcolor(RGB(255, 255, 255));
+	settextstyle(GOTHIC_FONT, HORIZ_DIR, 0);
+	setusercharsize(1, 2, 1, 2);
+
+	int ms = (clock() - stopwatch) * 1000 / CLOCKS_PER_SEC;
+	int fps = 1000 / (ms == 0 ? 1 : ms);
+	char msg[512];
+	sprintf(msg, "%dfps (%d ms)", fps, ms);
+
+	outtextxy(1790, 1050, msg);
+}
+
+
+
+struct FloatWindow
+{
+	// top left corner
+	int pivotX = 1200;
+	int pivotY =  590;
+
+	int width  = 700;
+	int height = 450;
+
+	int titleBarHeight = 45;
+};
+
+FloatWindow floatWindow;
+
+void DrawFloatWindow()
+{
+	int x = floatWindow.pivotX;
+	int y = floatWindow.pivotY;
+
+	int width  = floatWindow.width;
+	int height = floatWindow.height;
+
+	setlinestyle(SOLID_LINE, 0, 5);
+	setcolor(RGB(4, 3, 22));
+	rectangle(x, y, x + width, y + height);
+	line(x, y + floatWindow.titleBarHeight, x + width, y + floatWindow.titleBarHeight); // title bar delim
+	line(x + width - 35, y + 12, x + width - 15, y + 32); // draw x
+	line(x + width - 35, y + 32, x + width - 15, y + 12); // draw x
+
+	// input fields
+	rectangle(x +  60, y + 130, x + 230, y + 170);
+	rectangle(x + 280, y + 130, x + 450, y + 170);
+	rectangle(x + 500, y + 130, x + 670, y + 170);
+
+	rectangle(x +  60, y + 250, x + 230, y + 290);
+	rectangle(x + 280, y + 250, x + 450, y + 290);
+	rectangle(x + 500, y + 250, x + 670, y + 290);
+
+	rectangle(x +  60, y + 370, x + 230, y + 410);
+	rectangle(x + 280, y + 370, x + 450, y + 410);
+	rectangle(x + 500, y + 370, x + 670, y + 410);
+
+	setlinestyle(SOLID_LINE, 0, THICK_WIDTH);
+
+	if (x + 6 >= 0) // check if outside the screen
+	{
+		setfillstyle(SOLID_FILL, RGB(42, 52, 102)); // flood title bar
+		floodfill(x + 6, y + 6, RGB(4, 3, 22));
+		setfillstyle(SOLID_FILL, RGB(14, 19, 52));
+		floodfill(x + 6, y + floatWindow.titleBarHeight + 20, RGB(4, 3, 22)); // flood rest
+	}
+	else
+	{
+		setfillstyle(SOLID_FILL, RGB(42, 52, 102)); // flood title bar
+		floodfill(x + width - 6, y + 6, RGB(4, 3, 22));
+		setfillstyle(SOLID_FILL, RGB(14, 19, 52));
+		floodfill(x + width - 6, y + floatWindow.titleBarHeight + 20, RGB(4, 3, 22)); // flood rest
+	}
+
+	// input fields
+	setfillstyle(SOLID_FILL, RGB(0, 0, 0));
+	floodfill(x + 60 + 6, y + 130 + 6, RGB(4, 3, 22));
+	floodfill(x + 280 + 6, y + 130 + 6, RGB(4, 3, 22));
+	floodfill(x + 500 + 6, y + 130 + 6, RGB(4, 3, 22));
+	floodfill(x + 60 + 6, y + 250 + 6, RGB(4, 3, 22));
+	floodfill(x + 280 + 6, y + 250 + 6, RGB(4, 3, 22));
+	floodfill(x + 500 + 6, y + 250 + 6, RGB(4, 3, 22));
+	floodfill(x + 60 + 6, y + 370 + 6, RGB(4, 3, 22));
+	floodfill(x + 280 + 6, y + 370 + 6, RGB(4, 3, 22));
+	floodfill(x + 500 + 6, y + 370 + 6, RGB(4, 3, 22));
+
+	setbkcolor(RGB(14, 19, 52));
+
+	settextstyle(GOTHIC_FONT, HORIZ_DIR, 0);
+	setusercharsize(5, 6, 5, 3);
+
+	setcolor(RGB(184, 211, 255));
+	outtextxy(x + 20, y + floatWindow.titleBarHeight +  30, "o Position");
+	outtextxy(x + 20, y + floatWindow.titleBarHeight + 150, "o Scale");
+	outtextxy(x + 20, y + floatWindow.titleBarHeight + 270, "o Rotation");
+
+	setcolor(RGB(255, 0, 0));
+	outtextxy(x + 25, y + 135, "X");
+	setcolor(RGB(0, 0, 255));
+	outtextxy(x + 247, y + 135, "Y");
+	setcolor(RGB(0, 250, 0));
+	outtextxy(x + 465, y + 135, "Z");
+
+	setcolor(RGB(255, 0, 0));
+	outtextxy(x + 25, y + 255, "X");
+	setcolor(RGB(0, 0, 255));
+	outtextxy(x + 247, y + 255, "Y");
+	setcolor(RGB(0, 250, 0));
+	outtextxy(x + 465, y + 255, "Z");
+
+	setcolor(RGB(255, 0, 0));
+	outtextxy(x + 25, y + 375, "X");
+	setcolor(RGB(0, 0, 255));
+	outtextxy(x + 247, y + 375, "Y");
+	setcolor(RGB(0, 250, 0));
+	outtextxy(x + 465, y + 375, "Z");
+
+	setbkcolor(RGB(0, 0, 0));
+
+
+
+	// input fields text
+	char msg[512];
+	setcolor(RGB(42, 52, 102));
+
+	sprintf(msg, "%.3f", selectedObject->position.x); if (strlen(msg) > 10) msg[8] = msg[9] = '.';  msg[10] = NULL;
+	outtextxy(x + 70, y + 135, msg);
+	sprintf(msg, "%.3f", (selectedObject->position.y == 0 ? 0 : -selectedObject->position.y)); if (strlen(msg) > 10) msg[8] = msg[9] = '.';  msg[10] = NULL;
+	outtextxy(x + 292, y + 135, msg);
+	sprintf(msg, "%.3f", selectedObject->position.z); if (strlen(msg) > 10) msg[8] = msg[9] = '.';  msg[10] = NULL;
+	outtextxy(x + 510, y + 135, msg);
+
+	sprintf(msg, "%.3f", selectedObject->scale.x); if (strlen(msg) > 10) msg[8] = msg[9] = '.';  msg[10] = NULL;
+	outtextxy(x + 70, y + 255, msg);
+	sprintf(msg, "%.3f", selectedObject->scale.y); if (strlen(msg) > 10) msg[8] = msg[9] = '.';  msg[10] = NULL;
+	outtextxy(x + 292, y + 255, msg);
+	sprintf(msg, "%.3f", selectedObject->scale.z); if (strlen(msg) > 10) msg[8] = msg[9] = '.';  msg[10] = NULL;
+	outtextxy(x + 510, y + 255, msg);
+
+	sprintf(msg, "%d deg", (int)(selectedObject->realRotation.x * 180/PI)); if (strlen(msg) > 10) msg[8] = msg[9] = '.';  msg[10] = NULL;
+	outtextxy(x + 70, y + 375, msg);
+	sprintf(msg, "%d deg", (int)(selectedObject->realRotation.y * 180/PI)); if (strlen(msg) > 10) msg[8] = msg[9] = '.';  msg[10] = NULL;
+	outtextxy(x + 292, y + 375, msg);
+	sprintf(msg, "%d deg", (int)(selectedObject->realRotation.z * 180/PI)); if (strlen(msg) > 10) msg[8] = msg[9] = '.';  msg[10] = NULL;
+	outtextxy(x + 510, y + 375, msg);
+}
+
+void DrawMenu(Menu* menu)
+{
+	// background
+	int back_color = RGB(14, 19, 52);
+	setcolor(back_color);
+	rectangle(0, 0, 1920, 75);
+	setfillstyle(SOLID_FILL, back_color);
+	floodfill(5, 5, back_color);
+
+	int back_highlight = RGB(5, 8, 32);
+	setcolor(back_highlight);
+	setlinestyle(SOLID_LINE, 0, 5);
+	rectangle(0, 79, 1920, 84);
+
+	int delim_color = RGB(42, 52, 102);
+
+	// delimitator intre grupuri de butoane
+	setcolor(delim_color);
+	setlinestyle(SOLID_LINE, 0, 5);
+	rectangle(270, 10, 275, 70);
+
+	setlinestyle(SOLID_LINE, 0, THICK_WIDTH);
+
+	// delimitator 2
+	setcolor(delim_color);
+	setlinestyle(SOLID_LINE, 0, 5);
+	rectangle(560, 10, 565, 70);
+
+	setlinestyle(SOLID_LINE, 0, THICK_WIDTH);
+
+	// delimitator 3
+	setcolor(delim_color);
+	setlinestyle(SOLID_LINE, 0, 5);
+	rectangle(850, 10, 855, 70);
+
+	setlinestyle(SOLID_LINE, 0, THICK_WIDTH);
+
+	// buttons
+	for (int i = 0; i < menu->buttonCount; i++)
+		DrawButton(menu->buttons[i], i);
+	DrawAxis();
+
+	if (flags->drawTooltip == true)
+		DrawTooltip();
+
+	if(flags->floatWindowClosed == false)
+		DrawFloatWindow();
+
+	DrawFPS();
 }

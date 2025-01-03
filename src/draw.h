@@ -62,12 +62,12 @@ void DrawTriangle(int pos, Object* object)
 
 	int final_color = RGB(r, g, b);
 
-	if (final_color < 15) // se foloseau culorile predefinite RED GREEN YELLOW etc 0-15 in loc de negru
+	if (final_color <= 15) // se foloseau culorile predefinite RED GREEN YELLOW etc 0-15 in loc de negru
 		final_color = RGB(0, 0, 0);
 	
 
-	if (object == addVerticeObject && highlighted[pos])
-		final_color = YELLOW;
+	//if (object == addVerticeObject && highlighted[pos])
+	//	final_color = YELLOW;
 
 	if (flags->xray == false)
 		setcolor(final_color);
@@ -183,6 +183,25 @@ void CalculateRealCoords(Object* object)
 		// artificially center objects
 		Translate(object->realVertices[i], { WINDOW_WIDTH / 2.0, WINDOW_HEIGHT / 2.0, 0 });
 	}
+
+	object->realRotation = { object->realRotation.x + object->rotation.x, 
+							 object->realRotation.y + object->rotation.y, 
+							 object->realRotation.z + object->rotation.z };
+
+	if (object->realRotation.x < 0)
+		object->realRotation.x = 2 * PI + object->realRotation.x;
+	while (object->realRotation.x >= 2 * PI)
+		object->realRotation.x -= 2 * PI;
+
+	if (object->realRotation.y < 0)
+		object->realRotation.y = 2 * PI + object->realRotation.y;
+	while (object->realRotation.y >= 2 * PI)
+		object->realRotation.y -= 2 * PI;
+
+	if (object->realRotation.z < 0)
+		object->realRotation.z = 2 * PI + object->realRotation.z;
+	while (object->realRotation.z >= 2 * PI)
+		object->realRotation.z -= 2 * PI;
 
 	object->rotation = { 0, 0, 0 };
 }

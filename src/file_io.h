@@ -45,6 +45,18 @@ void SaveAsTri(char filePath[], Object**& objects, int& objectCount, Flags*& fla
 			fout << '\n';
 		}
 
+		fout << "\n# Texture\n";
+		if (objects[i]->texture != NULL)
+		{
+			if (strstr(objects[i]->texturePath, "textures") != NULL)
+				fout << strstr(objects[i]->texturePath, "textures");
+			else
+				fout << objects[i]->texturePath;
+		}
+		else
+			fout << "NO_TEXTURE";
+		fout << '\n';
+
 		fout << '\n';
 	}
 
@@ -211,7 +223,47 @@ void OpenTri(char filePath[], Object**& objects, int& objectCount, Flags*& flags
 				fin >> objects[i]->ad[j][k];
 		}
 
-		SkipFileLines(fin, 2);
+		SkipFileLines(fin, 3);
+		fin.getline(objects[i]->texturePath, 512);
+
+		if (strcmp(objects[i]->texturePath, "NO_TEXTURE") != 0)
+		{
+			char absFilePath[512] = "";
+
+			// is relative to github repo make it absolute path
+			if (strstr(objects[i]->texturePath, "C:\\") == 0)
+			{
+				strcpy(absFilePath, flags->workingDir);
+				strcat(absFilePath, "//");
+			}
+
+			strcat(absFilePath, objects[i]->texturePath);
+
+			ReadBitmap(absFilePath, objects[i]->texture, objects[i]->textureW, objects[i]->textureH);
+
+			if (objects[i]->vertexCount == 8 && objects[i]->indexCount == 12) // probably a cube idk
+			{
+				objects[i]->uv = new UV[12]{ { {0.25, 0.33}, {0.00, 0.33}, {0.00, 0.66} },
+											 { {0.25, 0.66}, {0.25, 0.33}, {0.00, 0.66} },
+											 
+											 { {0.50, 0.33}, {0.75, 0.33}, {0.50, 0.66} },
+											 { {0.75, 0.33}, {0.75, 0.66}, {0.50, 0.66} },
+											 
+											 { {0.50, 0.33}, {0.25, 0.33}, {0.25, 0.66} },
+											 { {0.50, 0.66}, {0.50, 0.33}, {0.25, 0.66} },
+											 
+											 { {0.75, 0.33}, {1.00, 0.33}, {0.75, 0.66} },
+											 { {1.00, 0.33}, {1.00, 0.66}, {0.75, 0.66} },
+											 
+											 { {0.50, 0.00}, {0.25, 0.00}, {0.25, 0.33} },
+											 { {0.50, 0.33}, {0.50, 0.00}, {0.25, 0.33} },
+											 
+											 { {0.25, 0.66}, {0.50, 0.66}, {0.25, 1.00} },
+											 { {0.50, 0.66}, {0.50, 1.00}, {0.25, 1.00} } };
+			}
+		}
+
+		SkipFileLines(fin, 1);
 	}
 
 	flags->objectCapacity = objectCount; // fixed a bug

@@ -1,6 +1,52 @@
 #pragma once
 
-void OpenTexture(char*& bitmap, int& bmWidth, int& bmHeight)
+void ReadBitmap(char filePath[512], unsigned char*& bitmap, int& bmWidth, int& bmHeight)
+{
+	FILE* input = fopen(filePath, "rb");
+
+	// get width and height at offset 18
+	fseek(input, 18, SEEK_SET);
+	fread(&bmWidth, 4, 1, input);
+	fread(&bmHeight, 4, 1, input);
+
+	char format;
+	fseek(input, 28, SEEK_SET);
+	fread(&format, 1, 1, input);
+
+	if (bitmap != NULL)
+		delete[] bitmap;
+	bitmap = new unsigned char[24 + 4 * bmWidth * bmHeight];
+	getimage(0, 0, bmWidth - 1, bmHeight - 1, bitmap); // take a screenshot. it creates the file header automatically (first 24 bytes)
+
+	fseek(input, 54, SEEK_SET); // skip actual file header which is different from the one graphics.h uses because why not
+
+	// for some reason bitmaps are stored upside down so i cant just fread the whole thing i gotta do this 
+	if (format == 32)
+	{
+		for (int y = bmHeight - 1; y >= 0; y--)
+			for (int x = 0; x < bmWidth; x++)
+				fread(bitmap + 24 + 4 * (y * bmWidth + x), 4, 1, input);
+	}
+	else if (format == 24)
+	{
+		for (int y = bmHeight - 1; y >= 0; y--)
+			for (int x = 0; x < bmWidth; x++)
+			{
+				fread(bitmap + 24 + 4 * (y * bmWidth + x), 3, 1, input);
+														// ^~~~~~ it changed!
+				bitmap[24 + 4 * (y * bmWidth + x) + 3] = 255;
+			}
+	}
+	else
+	{
+		cout << "ERROR: Format not supported!\n";
+		delete[] bitmap;
+	}
+
+	fclose(input);
+}
+
+void OpenTexture(unsigned char*& bitmap, int& bmWidth, int& bmHeight, char outPath[512])
 {
 	OPENFILENAME dialogue = { 0 };
 	char filePath[512] = "";
@@ -17,44 +63,10 @@ void OpenTexture(char*& bitmap, int& bmWidth, int& bmHeight)
 
 	if (error != 0) // success
 	{
-		FILE* input = fopen(filePath, "rb");
+		ReadBitmap(filePath, bitmap, bmWidth, bmHeight);
 
-		// get width and height at offset 18
-		fseek(input, 18, SEEK_SET);
-		fread(&bmWidth,  4, 1, input);
-		fread(&bmHeight, 4, 1, input);
-
-		char format;
-		fseek(input, 28, SEEK_SET);
-		fread(&format, 1, 1, input);
-
-		if (bitmap != NULL)
-			delete[] bitmap;
-		bitmap = new char[24 + 4 * bmWidth * bmHeight];
-		getimage(0, 0, bmWidth - 1, bmHeight - 1, bitmap); // take a screenshot. it creates the file header automatically (first 24 bytes)
-
-		fseek(input, 54, SEEK_SET); // skip actual file header which is different from the one graphics.h uses because why not
-
-		// for some reason bitmaps are stored upside down so i cant just fread the whole thing i gotta do this 
-		if (format == 32)
-		{
-			for (int y = bmHeight - 1; y >= 0; y--)
-				for (int x = 0; x < bmWidth; x++)
-					fread(bitmap + 24 + 4 * (y * bmWidth + x), 4, 1, input);
-		}
-		else if (format == 24)
-		{
-			for (int y = bmHeight - 1; y >= 0; y--)
-				for (int x = 0; x < bmWidth; x++)
-					fread(bitmap + 24 + 4 * (y * bmWidth + x), 3, 1, input);
-			                                                // ^~~~~~ it changed!
-		}
-		else
-		{
-			cout << "ERROR: Format not supported!\n";
-		}
-
-		fclose(input);
+		if(bitmap != NULL)
+			strcpy(outPath, filePath);
 	}
 
 	flags->updateWindow = 1;
@@ -96,7 +108,7 @@ void FastSetPixel(int x, int y, int color)
 	canvas[24 + 4 * (y * WINDOW_WIDTH + x) + 3] = 0;                // alpha
 }
 
-int FastGetPixel(int x, int y, char* bitmap, int width, int height, float shadow, int tint)
+int FastGetPixel(int x, int y, unsigned char* bitmap, int width, int height, float shadow, int tint)
 {
 	if (x < 0 || x >= width || y < 0 || y >= height)
 		return RGB(0, 0, 0);
@@ -125,7 +137,7 @@ float Baryocentric(Vector3 first, Vector3 second, Vector3 point)
 	return (second.x - first.x) * (point.y - first.y) - (second.y - first.y) * (point.x - first.x);
 }
 
-void DrawTexturedTriangle(Vector3 third, Vector3 second, Vector3 first, Vector2 uv3, Vector2 uv2, Vector2 uv1, char* texture, int textureWidth, int textureHeight, float shadow, int tint)
+void DrawTexturedTriangle(Vector3 third, Vector3 second, Vector3 first, Vector2 uv3, Vector2 uv2, Vector2 uv1, unsigned char* texture, int textureWidth, int textureHeight, float shadow, int tint)
 {
 	float minX = min(first.x, min(second.x, third.x));
 	float minY = min(first.y, min(second.y, third.y));

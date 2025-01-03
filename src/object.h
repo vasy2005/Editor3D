@@ -3,11 +3,19 @@
 void ResetCamera()
 {
 	camera.position = { 0, 0, 0 };
-	camera.rotation = { 0, 0, 0 };
+	camera.rotation = { 0.5, -0.8, 0 };
+
+	camera.direction = { -cos(camera.rotation.x) * sin(camera.rotation.y),
+						 sin(camera.rotation.x),
+						-cos(camera.rotation.x) * cos(camera.rotation.y) };
 
 	camera.forward = { 0, 0, -1 };
 	camera.up = { 0, 1,  0 };
 	camera.right = { 1, 0,  0 };
+
+	Rotate(camera.forward, camera.rotation);
+	Rotate(camera.up, camera.rotation);
+	Rotate(camera.right, camera.rotation);
 }
 
 void NewScene(Object**& objects, int& objectCount, Flags*& flags)
@@ -129,7 +137,7 @@ void PasteObject(Object* object)
 
 	if (copiedObject->texture != NULL)
 	{
-		newObj->texture = new char[24 + 4 * copiedObject->textureW * copiedObject->textureH];
+		newObj->texture = new unsigned char[24 + 4 * copiedObject->textureW * copiedObject->textureH];
 		memcpy(newObj->texture, copiedObject->texture, 24 + 4 * copiedObject->textureW * copiedObject->textureH);
 	}
 	else
@@ -137,6 +145,8 @@ void PasteObject(Object* object)
 
 	newObj->textureW = copiedObject->textureW;
 	newObj->textureH = copiedObject->textureH;
+
+	strcpy(newObj->texturePath, copiedObject->texturePath);
 }
 
 

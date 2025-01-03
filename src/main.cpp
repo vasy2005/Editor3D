@@ -43,17 +43,42 @@ int main()
 
 	objects = new Object*[flags->objectCapacity]; // init with capacity of 16, resize later
 
-	canvas = new char[24 + 4 * WINDOW_WIDTH * WINDOW_HEIGHT];
+	canvas = new unsigned char[24 + 4 * WINDOW_WIDTH * WINDOW_HEIGHT];
+
+	ResetCamera();
+
 
 	int buffer = 0;
 
 	while (flags->windowShouldClose == false)
 	{
+		stopwatch = clock(); // din time.h
+
+		oldSelectedObject = selectedObject;
+
 		ProcessInput(objects, objectCount, flags, menu); // handle mouse and keyboard events
-		getMouseInputRot(objects, objectCount);
-		getMouseInputScale(objects, objectCount);
-		// getMouseInputPos(objects, objectCount); // se deselecteaza obiectul si cand dai clic pe meniu
-		checkKeyPressed();
+		// cout << "1: " << (selectedObject == NULL) << '\n';
+
+		if (mousey() > 85)
+		{
+			// getMouseInputRot(objects, objectCount); // cout << "2.1: " << (selectedObject == NULL) << '\n';
+			// ^~~~ se deselecteaza selectedObject si aici fara sa dai clic ciudat
+			getMouseInputScale(objects, objectCount); // cout << "2.2: " << (selectedObject == NULL) << '\n';
+			// getMouseInputPos(objects, objectCount); // se deselecteaza obiectul si cand dai clic pe meniu
+
+			// cout << "2.3: " << (selectedObject == NULL) << '\n';
+			checkKeyPressed();
+
+			// cout << "2.4: " << (selectedObject == NULL) << '\n';
+		}
+
+		if (selectedObject != NULL)
+		{
+			if (oldSelectedObject != selectedObject) // reopen float window
+				flags->floatWindowClosed = false;
+		}
+		else
+			flags->floatWindowClosed = true;
 
 		// ascunde paste cand nu e nimic in clipboard
 		menu->buttons[8].disabled = (copiedObject == NULL);
@@ -89,9 +114,6 @@ int main()
 
 			DrawMenu(menu); // draw over objects
 
-			if (flags->drawTooltip == true)
-				DrawTooltip();
-
 			//if (selectedObject != NULL && selectedObject->texture != NULL)
 			//{
 			//	putimage(0, 0, selectedObject->texture, COPY_PUT);
@@ -103,13 +125,18 @@ int main()
 
 			flags->updateWindow = false;
 
-			// cout << "drawing\n";
+			// cout << camera.rotation.x << ' ' << camera.rotation.y << ' ' << camera.rotation.z << '\n';
+			// cout << "drawing...\n";
+
+			// cout << "3: " << (selectedObject == NULL) << '\n';
+			// cout << floatWindow.pivotX << ' ' << floatWindow.pivotY << '\n';
 		}
 		///////////////////////////////////////////////////////
 
 		 delay(16); // cap framerate at 60fps
 	}
 
+	FreeIconsInMemory();
 	delete[] canvas;
 	delete[] objects;
 	delete menu;

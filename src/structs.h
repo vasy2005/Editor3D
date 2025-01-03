@@ -44,6 +44,7 @@ struct Object
 	Vector3 rotation;
 
 	Vector3 realPosition;
+	Vector3 realRotation = { 0, 0, 0 };
 
 	
 
@@ -51,7 +52,8 @@ struct Object
 
 	Color color;
 
-	char* texture = NULL;
+	char texturePath[512];
+	unsigned char* texture = NULL;
 	int textureW;
 	int textureH;
 };
@@ -88,12 +90,15 @@ struct Flags
 	char workingDir[512]; // folderul in care a fost deschisa aplicatia. cand dai open la un fiser se schimba folderul
 
 	bool xray = false;
+
+	bool floatWindowClosed  = true;
+	bool grabbedFloatWindow = false;
 };
 
 struct Camera
 {
 	Vector3 position = { 0, 0, +10 };
-	Vector3 rotation = { 0, 0,   0 };
+	Vector3 rotation = { 0.5, -0.8, 0 };
 
 	Vector3 forward = { 0, 0, -1 };
 	Vector3 up      = { 0, 1,  0 };
