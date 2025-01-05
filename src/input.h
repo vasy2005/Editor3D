@@ -674,7 +674,7 @@ void getMouseInputPos(Object* object[], int n)
 		clearmouseclick(WM_LBUTTONDOWN);
 		selectedVertice = -1;
 		selectedObjectMouse = NULL;
-		selectedObject = 0;
+		//selectedObject = 0;
 		verticeMoved = 0;
 		return;
 	}
@@ -700,7 +700,11 @@ void getMouseInputPos(Object* object[], int n)
 			return;
 		}
 
+		//if (selectedObject) clearmouseclick(WM_LBUTTONDOWN);
+		
 		if (selectedObjectMouse == NULL && selectedVertice == -1)
+		{
+			selectedObject = NULL; //pentru bug-ul cu "se deselecteaza selectedObject"
 			for (int i = 0; i < n; ++i)
 			{
 				Vector2 first = object[i]->hitBox[0];
@@ -715,6 +719,7 @@ void getMouseInputPos(Object* object[], int n)
 
 
 			}
+		}
 
 	}
 

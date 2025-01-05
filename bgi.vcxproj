@@ -109,6 +109,16 @@
     <ClInclude Include="src\texture.h" />
     <ClInclude Include="src\vector_math.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="textures\cat.bmp" />
+    <Image Include="textures\crating_table.bmp" />
+    <Image Include="textures\dice.bmp" />
+    <Image Include="textures\dirt.bmp" />
+    <Image Include="textures\grass.bmp" />
+    <Image Include="textures\kitty.bmp" />
+    <Image Include="textures\leaves.bmp" />
+    <Image Include="textures\log.bmp" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

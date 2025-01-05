@@ -43,6 +43,8 @@ int main()
 
 	objects = new Object*[flags->objectCapacity]; // init with capacity of 16, resize later
 
+	AddNewObject(0, 1);
+
 	canvas = new unsigned char[24 + 4 * WINDOW_WIDTH * WINDOW_HEIGHT];
 
 	ResetCamera();
@@ -56,21 +58,29 @@ int main()
 
 		oldSelectedObject = selectedObject;
 
-		ProcessInput(objects, objectCount, flags, menu); // handle mouse and keyboard events
-		// cout << "1: " << (selectedObject == NULL) << '\n';
+		bool test;
 
+		
+		ProcessInput(objects, objectCount, flags, menu); // handle mouse and keyboard events
+		
+		// cout << "1: " << (selectedObject == NULL) << '\n';
+		cout << flags->drawTooltip << ' ' << (selectedObject != NULL) << 1 << '\n';
 		if (mousey() > 85)
 		{
-			// getMouseInputRot(objects, objectCount); // cout << "2.1: " << (selectedObject == NULL) << '\n';
+			//cout << "2.1: " << (selectedObject == NULL) << '\n';
+			
+			getMouseInputRot(objects, objectCount); 
+			
 			// ^~~~ se deselecteaza selectedObject si aici fara sa dai clic ciudat
 			getMouseInputScale(objects, objectCount); // cout << "2.2: " << (selectedObject == NULL) << '\n';
-			// getMouseInputPos(objects, objectCount); // se deselecteaza obiectul si cand dai clic pe meniu
+			getMouseInputPos(objects, objectCount); // se deselecteaza obiectul si cand dai clic pe meniu
 
 			// cout << "2.3: " << (selectedObject == NULL) << '\n';
 			checkKeyPressed();
 
 			// cout << "2.4: " << (selectedObject == NULL) << '\n';
 		}
+		cout << flags->drawTooltip << ' ' << (selectedObject != NULL) << 2 << '\n';
 
 		if (selectedObject != NULL)
 		{
@@ -90,6 +100,7 @@ int main()
 		///// DRAW HERE ///////////////////////////////////////
 		if (flags->updateWindow == true) // only redraw screen if there are changes
 		{
+			//cout << flags->drawTooltip << ' ' << (selectedObject != NULL) <<1<< '\n';
 			setvisualpage(buffer);
 			setactivepage(1 - buffer);
 
@@ -113,7 +124,6 @@ int main()
 				DrawObject(objects[i]);
 
 			DrawMenu(menu); // draw over objects
-
 			//if (selectedObject != NULL && selectedObject->texture != NULL)
 			//{
 			//	putimage(0, 0, selectedObject->texture, COPY_PUT);
@@ -130,8 +140,10 @@ int main()
 
 			// cout << "3: " << (selectedObject == NULL) << '\n';
 			// cout << floatWindow.pivotX << ' ' << floatWindow.pivotY << '\n';
+			//cout << flags->drawTooltip << ' ' << (selectedObject != NULL) <<2<< '\n';
 		}
 		///////////////////////////////////////////////////////
+
 
 		 delay(16); // cap framerate at 60fps
 	}
