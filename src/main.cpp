@@ -67,18 +67,14 @@ int main()
 		cout << flags->drawTooltip << ' ' << (selectedObject != NULL) << 1 << '\n';
 		if (mousey() > 85)
 		{
-			//cout << "2.1: " << (selectedObject == NULL) << '\n';
 			
 			getMouseInputRot(objects, objectCount); 
 			
-			// ^~~~ se deselecteaza selectedObject si aici fara sa dai clic ciudat
-			getMouseInputScale(objects, objectCount); // cout << "2.2: " << (selectedObject == NULL) << '\n';
-			getMouseInputPos(objects, objectCount); // se deselecteaza obiectul si cand dai clic pe meniu
+			getMouseInputScale(objects, objectCount);
+			getMouseInputPos(objects, objectCount); 
 
-			// cout << "2.3: " << (selectedObject == NULL) << '\n';
 			checkKeyPressed();
 
-			// cout << "2.4: " << (selectedObject == NULL) << '\n';
 		}
 		cout << flags->drawTooltip << ' ' << (selectedObject != NULL) << 2 << '\n';
 

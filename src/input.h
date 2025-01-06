@@ -607,7 +607,22 @@ void getMouseInputRot(Object* object[], int n)
 		flags->updateWindow = 1;
 
 
-	object[crt]->rotation = { object[crt]->rotation.x - (y - inity) / 180, object[crt]->rotation.y + (x - initx) / 180, object[crt]->rotation.z };
+
+	double x0 = object[crt]->rotation.x;
+	double y0 = object[crt]->rotation.y;
+	double z0 = object[crt]->rotation.z;
+
+	//find u and v orthogonal vectors
+
+	Vector3 u = cross(camera.direction, { 0, 1, 0 });
+	Vector3 v = cross(u, camera.direction);
+
+	Normalize(u);
+	Normalize(v);
+
+	double py = (x - initx)/180.0;
+	double px = -(y - inity)/180.0;
+	object[crt]->rotation = { x0 + px * u.x + py * v.x, y0 + px * u.y + py * v.y, z0 + px * u.z + py * v.z };
 	initx = x; inity = y;
 }
 
@@ -725,14 +740,37 @@ void getMouseInputPos(Object* object[], int n)
 
 	if (selectedObjectMouse && selectedVertice == -1 && verticeMoved == 0)
 	{
+		static double x0, y0, z0;
 		if (!mouseP)
 		{
 			mouseP = 1;
-			dx = x - selectedObjectMouse->position.x;
-			dy = y - selectedObjectMouse->position.y;
+			dx = x;
+			dy = y;
+
+			x0 = selectedObjectMouse->position.x;
+			y0 = selectedObjectMouse->position.y;
+			z0 = selectedObjectMouse->position.z;
+
 		}
-		selectedObjectMouse->position.x = x - dx;
-		selectedObjectMouse->position.y = y - dy;
+
+		
+		//find u and v orthogonal vectors
+		Vector3 u = cross(camera.direction, { 0, 1, 0 });
+		Vector3 v = cross(u, camera.direction);
+
+		Normalize(u);
+		Normalize(v);
+
+		double px = x - dx; 
+		double py = y - dy;
+		//px *= Distance(camera.position, selectedObjectMouse->position);
+		//py *= Distance(camera.position, selectedObjectMouse->position);
+
+		//px /= err;
+		//py /= err;
+
+		selectedObjectMouse->position = { x0 + px * u.x + py * v.x, y0 + px * u.y + py * v.y, z0 + px * u.z + py * v.z };
+		
 	}
 
 	if (mouseP)

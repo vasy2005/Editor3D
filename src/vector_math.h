@@ -38,6 +38,24 @@ void Transform(double transform_mat[4][4], Vector4& vector)
 	vector = { result_mat[0][0], result_mat[1][0], result_mat[2][0], result_mat[3][0] };
 }
 
+void MultiplyMatrix(double a[3][3], double b[3][3])
+{
+	double c[3][3];
+	int i, j, k;
+	for (i = 0; i < 3; ++i)
+		for (j = 0; j < 3; ++j)
+			c[i][j] = 0;
+
+	for (i = 0; i < 3; ++i)
+		for (j = 0; j < 3; ++j)
+			for (k = 0; k < 3; ++k)
+				c[i][j] += a[i][k] * b[k][j];
+
+	for (i = 0; i < 3; ++i)
+		for (j = 0; j < 3; ++j)
+			a[i][j] = c[i][j];
+}
+
 void Rotate(Vector3& vector, Vector3& rotation)
 {
 	double rcos, rsin;
