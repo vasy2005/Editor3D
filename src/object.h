@@ -74,8 +74,12 @@ void CopyObject(Object* object)
 	}
 
 	if(copiedObject == NULL)
+	{
 		flags->updateWindow = true; // ca sa apara paste prima data
-	copiedObject = object;
+		copiedObject = new Object;
+	}
+
+	*copiedObject = *object;
 }
 
 void PasteObject(Object* object)

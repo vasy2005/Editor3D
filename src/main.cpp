@@ -64,8 +64,8 @@ int main()
 		ProcessInput(objects, objectCount, flags, menu); // handle mouse and keyboard events
 		
 		// cout << "1: " << (selectedObject == NULL) << '\n';
-		cout << flags->drawTooltip << ' ' << (selectedObject != NULL) << 1 << '\n';
-		if (mousey() > 85)
+		// cout << flags->drawTooltip << ' ' << (selectedObject != NULL) << 1 << '\n';
+		if (mousey() > 85 && flags->grabbedFloatWindow == false)
 		{
 			
 			getMouseInputRot(objects, objectCount); 
@@ -76,7 +76,7 @@ int main()
 			checkKeyPressed();
 
 		}
-		cout << flags->drawTooltip << ' ' << (selectedObject != NULL) << 2 << '\n';
+		// cout << flags->drawTooltip << ' ' << (selectedObject != NULL) << 2 << '\n';
 
 		if (selectedObject != NULL)
 		{

@@ -490,7 +490,7 @@ struct FloatWindow
 {
 	// top left corner
 	int pivotX = 1200;
-	int pivotY =  590;
+	int pivotY =  565;
 
 	int width  = 700;
 	int height = 450;
@@ -666,5 +666,11 @@ void DrawMenu(Menu* menu)
 	if(flags->floatWindowClosed == false)
 		DrawFloatWindow();
 
-	DrawFPS();
+	// DrawFPS();
+	setcolor(RGB(255, 255, 255));
+	settextstyle(GOTHIC_FONT, HORIZ_DIR, 0);
+	setusercharsize(1, 2, 1, 2);
+
+	outtextxy(1730, 1025, "Vasilache Stefan");
+	outtextxy(1730, 1050, "Apetrei Ionut-Teodor");
 }
