@@ -119,6 +119,10 @@
     <Image Include="textures\leaves.bmp" />
     <Image Include="textures\log.bmp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="scenes\camera_test.tri" />
+    <None Include="scenes\minecraft.tri" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

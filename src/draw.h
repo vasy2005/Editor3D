@@ -66,8 +66,8 @@ void DrawTriangle(int pos, Object* object)
 		final_color = RGB(0, 0, 0);
 	
 
-	//if (object == addVerticeObject && highlighted[pos])
-	//	final_color = YELLOW;
+	if (object == addVerticeObject && highlighted[pos])
+		final_color = YELLOW;
 
 	if (flags->xray == false)
 		setcolor(final_color);

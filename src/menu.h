@@ -671,6 +671,7 @@ void DrawMenu(Menu* menu)
 	settextstyle(GOTHIC_FONT, HORIZ_DIR, 0);
 	setusercharsize(1, 2, 1, 2);
 
-	outtextxy(1730, 1025, "Vasilache Stefan");
-	outtextxy(1730, 1050, "Apetrei Ionut-Teodor");
+	outtextxy(1760, 1000, "Vasilache Stefan");
+	outtextxy(1730, 1025, "Apetrei Ionut-Teodor");
+	outtextxy(1580, 1050, "Profesor Coordonator: Bogdan Patrut");
 }
