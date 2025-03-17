@@ -1,5 +1,5 @@
-Acesta este un Editor 3D creat de Apetrei Ionuț și Vasilache Ștefan, ce are ca scop vizualizarea și editarea unor obiecte 3D în plan 3D. 
+This is a 3D Editor developed by Apetrei Ionuț and Vasilache Ștefan, designed for viewing and editing 3D objects in a three-dimensional space.
 
-Putem vizualiza, edita si salva obiecte în fisiere standard 3D (.obj), putem crea obiecte noi si vizualiza acestea într-un plan 3D.
+Users can view, edit, and save objects in standard 3D file formats (.obj), as well as in an custom .tri format, create new objects, and visualize them in a 3D environment.
 
-Proiectul este creat în C++ folosind WinBGIm Graphics Library.
+The project is developed in C++ using the WinBGIm Graphics Library.
